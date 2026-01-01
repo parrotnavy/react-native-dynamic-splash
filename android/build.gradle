@@ -1,0 +1,15 @@
+apply plugin: "com.android.library"
+
+android {
+    namespace "com.reactnativedynamicsplash"
+    compileSdkVersion rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+    }
+}
+
+dependencies {
+    implementation "com.facebook.react:react-native:+"
+}

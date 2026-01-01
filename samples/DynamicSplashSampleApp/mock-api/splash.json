@@ -1,0 +1,32 @@
+[
+  {
+    "imageName": "promo-pink",
+    "alt": "Pink Hug",
+    "startAt": "2023-01-01T00:00:00Z",
+    "endAt": "2026-12-31T23:59:59Z",
+    "imageUrl": "https://picsum.photos/seed/splash2/1080/1920",
+    "configVersion": "promo-pink-v1",
+    "backgroundColor": "#FFC0CB",
+    "weight": 5
+  },
+  {
+    "imageName": "promo-blue",
+    "alt": "Blue Theme",
+    "startAt": "2023-01-01T00:00:00Z",
+    "endAt": "2026-12-31T23:59:59Z",
+    "imageUrl": "https://picsum.photos/seed/splash1/1080/1920",
+    "configVersion": "promo-blue-v1",
+    "backgroundColor": "#ADD8E6",
+    "weight": 3
+  },
+  {
+    "imageName": "promo-green",
+    "alt": "Green Theme",
+    "startAt": "2023-01-01T00:00:00Z",
+    "endAt": "2026-12-31T23:59:59Z",
+    "imageUrl": "https://www.easygifanimator.net/images/samples/video-to-gif-sample.gif",
+    "configVersion": "promo-green-v1",
+    "backgroundColor": "#90EE90",
+    "weight": 2
+  }
+]
