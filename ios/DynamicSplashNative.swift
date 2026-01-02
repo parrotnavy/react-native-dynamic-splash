@@ -160,7 +160,24 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
     return UIColor(red: r, green: g, blue: b, alpha: a)
   }
 
-  private static func loadReadyMeta() -> (imagePath: String, backgroundColor: UIColor?, enableFade: Bool, fadeDurationMs: Double, minDurationMs: Double?, maxDurationMs: Double?)? {
+  private struct ReadyMeta {
+    let imagePath: String
+    let backgroundColor: UIColor?
+    let enableFade: Bool
+    let fadeDurationMs: Double
+    let minDurationMs: Double?
+    let maxDurationMs: Double?
+    let scale: ScaleAnimation?
+  }
+
+  private struct ScaleAnimation {
+    let startScale: CGFloat
+    let endScale: CGFloat
+    let durationMs: Double
+    let easing: String?
+  }
+
+  private static func loadReadyMeta() -> ReadyMeta? {
     // Safely load from UserDefaults
     guard let raw = UserDefaults.standard.string(forKey: storageKey),
           !raw.isEmpty,
@@ -218,7 +235,87 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
       maxDurationMs = max
     }
     
-    return (localPath, backgroundColor, enableFade, fadeDurationMs, minDurationMs, maxDurationMs)
+    let scale = parseScaleAnimation(
+      start: json["scaleStart"],
+      end: json["scaleEnd"],
+      durationMs: json["scaleDurationMs"],
+      easing: json["scaleEasing"]
+    )
+
+    return ReadyMeta(
+      imagePath: localPath,
+      backgroundColor: backgroundColor,
+      enableFade: enableFade,
+      fadeDurationMs: fadeDurationMs,
+      minDurationMs: minDurationMs,
+      maxDurationMs: maxDurationMs,
+      scale: scale
+    )
+  }
+
+  private static func parseScaleAnimation(
+    start: Any?,
+    end: Any?,
+    durationMs: Any?,
+    easing: Any?
+  ) -> ScaleAnimation? {
+    let startValue = numberValue(start)
+    let endValue = numberValue(end)
+    let durationValue = numberValue(durationMs)
+    let easingValue = easingValue(easing)
+
+    if startValue == nil && endValue == nil && durationValue == nil {
+      return nil
+    }
+
+    guard let startScale = startValue,
+          let endScale = endValue,
+          let duration = durationValue,
+          duration > 0 else {
+      return nil
+    }
+
+    return ScaleAnimation(
+      startScale: CGFloat(startScale),
+      endScale: CGFloat(endScale),
+      durationMs: duration,
+      easing: easingValue
+    )
+  }
+
+  private static func numberValue(_ value: Any?) -> Double? {
+    if let number = value as? NSNumber {
+      return number.doubleValue
+    }
+    if let doubleValue = value as? Double {
+      return doubleValue
+    }
+    if let intValue = value as? Int {
+      return Double(intValue)
+    }
+    return nil
+  }
+
+  private static func easingValue(_ value: Any?) -> String? {
+    if let easing = value as? String, !easing.isEmpty {
+      return easing
+    }
+    return nil
+  }
+
+  private static func scaleAnimationOptions(_ easing: String?) -> UIView.AnimationOptions {
+    switch easing {
+    case "linear":
+      return .curveLinear
+    case "easeIn":
+      return .curveEaseIn
+    case "easeOut":
+      return .curveEaseOut
+    case "easeInOut":
+      return .curveEaseInOut
+    default:
+      return .curveEaseInOut
+    }
   }
 
   private static var fadeEnabled: Bool = true
@@ -255,6 +352,18 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
       window.rootViewController = viewController
       window.makeKeyAndVisible()
       overlayWindow = window
+
+      if let scale = meta.scale {
+        overlayContentView.transform = CGAffineTransform(scaleX: scale.startScale, y: scale.startScale)
+        UIView.animate(
+          withDuration: scale.durationMs / 1000.0,
+          delay: 0,
+          options: scaleAnimationOptions(scale.easing),
+          animations: {
+            overlayContentView.transform = CGAffineTransform(scaleX: scale.endScale, y: scale.endScale)
+          }
+        )
+      }
       
       // Set up auto-hide timer if maxDurationMs is specified
       if let maxDurationMs = meta.maxDurationMs, maxDurationMs > 0 {
@@ -279,32 +388,40 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
       maxDurationTimer = nil
       
       let performHide = {
-        if fadeEnabled && fadeDuration > 0 {
-          UIView.animate(withDuration: fadeDuration, animations: {
-            window.alpha = 0
-          }, completion: { _ in
-            window.isHidden = true
-            window.rootViewController = nil
-            overlayWindow = nil
-            showStartTime = nil
-            
-            // Restore app window safely
-            if let appDelegate = UIApplication.shared.delegate,
-               let appWindow = appDelegate.window as? UIWindow {
-              appWindow.makeKeyAndVisible()
-            }
-          })
-        } else {
+        let animatedView = window.rootViewController?.view ?? window
+        var pendingAnimations = 0
+
+        let finalize = {
           window.isHidden = true
           window.rootViewController = nil
           overlayWindow = nil
           showStartTime = nil
-          
+
           // Restore app window safely
           if let appDelegate = UIApplication.shared.delegate,
              let appWindow = appDelegate.window as? UIWindow {
             appWindow.makeKeyAndVisible()
           }
+        }
+
+        let finishIfNeeded = {
+          pendingAnimations -= 1
+          if pendingAnimations <= 0 {
+            finalize()
+          }
+        }
+
+        if fadeEnabled && fadeDuration > 0 {
+          pendingAnimations += 1
+          UIView.animate(withDuration: fadeDuration, animations: {
+            window.alpha = 0
+          }, completion: { _ in
+            finishIfNeeded()
+          })
+        }
+
+        if pendingAnimations == 0 {
+          finalize()
         }
       }
       
@@ -383,4 +500,3 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
     }
   }
 }
-

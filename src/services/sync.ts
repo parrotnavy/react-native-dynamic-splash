@@ -118,6 +118,8 @@ export async function processSplashConfig(
 
 	// Update Metadata
 	const now = Date.now();
+	const fadeOptions = normalizeFadeOptions(options);
+	const scale = normalizeScaleOptions("scale", options.animation?.scale);
 	const newMeta: StoredMeta = {
 		status: "READY",
 		imageName: config.imageName,
@@ -130,8 +132,12 @@ export async function processSplashConfig(
 		fetchedAt: now,
 		backgroundColor: config.backgroundColor,
 		configVersion: config.configVersion,
-		enableFade: options.enableFade,
-		fadeDurationMs: options.fadeDurationMs,
+		enableFade: fadeOptions.enabled,
+		fadeDurationMs: fadeOptions.durationMs,
+		scaleStart: scale?.startScale,
+		scaleEnd: scale?.endScale,
+		scaleDurationMs: scale?.durationMs,
+		scaleEasing: scale?.easing,
 		minDurationMs: options.minDurationMs,
 		maxDurationMs: options.maxDurationMs,
 	};
@@ -168,4 +174,63 @@ function selectConfigByWeight(configs: SplashConfig[]): SplashConfig {
 
 	// Fallback (rounding errors)
 	return candidates[candidates.length - 1];
+}
+
+function normalizeFadeOptions(options: InitOptions): {
+	enabled?: boolean;
+	durationMs?: number;
+} {
+	if (options.animation?.fade) {
+		return {
+			enabled: options.animation.fade.enabled,
+			durationMs: options.animation.fade.durationMs,
+		};
+	}
+	return {
+		enabled: options.animation?.fade?.enabled,
+		durationMs: options.animation?.fade?.durationMs,
+	};
+}
+
+function normalizeScaleOptions(
+	label: "scale",
+	scale?: {
+		startScale?: number;
+		endScale?: number;
+		durationMs?: number;
+		easing?: "linear" | "easeIn" | "easeOut" | "easeInOut";
+	},
+):
+	| {
+			startScale: number;
+			endScale: number;
+			durationMs: number;
+			easing?: "linear" | "easeIn" | "easeOut" | "easeInOut";
+	  }
+	| undefined {
+	if (!scale) return undefined;
+	const { startScale, endScale, durationMs, easing } = scale;
+	const hasStart = typeof startScale === "number" && !Number.isNaN(startScale);
+	const hasEnd = typeof endScale === "number" && !Number.isNaN(endScale);
+	const hasDuration =
+		typeof durationMs === "number" && !Number.isNaN(durationMs);
+
+	if (hasStart !== hasEnd) {
+		throw new Error(
+			`Invalid ${label}: startScale and endScale must be provided together`,
+		);
+	}
+	if (hasStart && hasEnd && !hasDuration) {
+		throw new Error(`Invalid ${label}: durationMs must be provided`);
+	}
+	if (!hasStart || !hasEnd || !hasDuration) return undefined;
+	if (durationMs <= 0) {
+		throw new Error(`Invalid ${label}: durationMs must be > 0`);
+	}
+	return {
+		startScale,
+		endScale,
+		durationMs,
+		easing,
+	};
 }
