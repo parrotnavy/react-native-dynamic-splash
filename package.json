@@ -49,5 +49,8 @@
   },
   "bugs": {
     "url": "https://github.com/parrotnavy/react-native-dynamic-splash/issues"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
