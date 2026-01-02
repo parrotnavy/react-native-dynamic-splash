@@ -58,7 +58,7 @@ public class DynamicSplashStorageModule extends ReactContextBaseJavaModule {
       }
       promise.resolve(prefs.getString(key, null));
     } catch (Exception e) {
-      promise.reject("ERROR", "Failed to get string from storage", e);
+      promise.reject("STORAGE_ERROR", "Failed to get string from storage", e);
     }
   }
 

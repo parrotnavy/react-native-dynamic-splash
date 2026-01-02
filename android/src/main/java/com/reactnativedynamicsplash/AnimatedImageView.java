@@ -52,11 +52,9 @@ public class AnimatedImageView extends ImageView {
             setImageDrawable(drawable);
           }
         } catch (IOException e) {
-          // Log but don't crash
-          e.printStackTrace();
+          // Silently handle IO errors - image loading is non-critical
         } catch (OutOfMemoryError e) {
-          // Handle OOM gracefully - image might be too large
-          e.printStackTrace();
+          // Silently handle OOM - image might be too large
         }
       } else {
         try {
@@ -65,13 +63,11 @@ public class AnimatedImageView extends ImageView {
             setImageBitmap(bitmap);
           }
         } catch (OutOfMemoryError e) {
-          // Handle OOM gracefully - image might be too large
-          e.printStackTrace();
+          // Silently handle OOM - image might be too large
         }
       }
     } catch (Exception e) {
-      // Catch any other unexpected exceptions
-      e.printStackTrace();
+      // Silently handle any other unexpected exceptions
     }
   }
 

@@ -329,7 +329,7 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
     try {
       promise.resolve(lastLoadedMetaRaw);
     } catch (Exception e) {
-      promise.reject("ERROR", "Failed to get last loaded meta", e);
+      promise.reject("META_ERROR", "Failed to get last loaded meta", e);
     }
   }
   
@@ -339,7 +339,7 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
       boolean showing = overlayDialog != null && overlayDialog.isShowing();
       promise.resolve(showing);
     } catch (Exception e) {
-      promise.reject("ERROR", "Failed to check if showing", e);
+      promise.reject("STATUS_ERROR", "Failed to check if showing", e);
     }
   }
 }
