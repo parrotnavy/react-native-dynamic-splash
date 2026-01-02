@@ -32,6 +32,10 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
   private static String lastLoadedMetaRaw;
   private static boolean fadeEnabled = true;
   private static int fadeDurationMs = 200;
+  private static Float scaleStart;
+  private static Float scaleEnd;
+  private static Integer scaleDurationMs;
+  private static String scaleEasing;
   private static long showStartTime = 0;
   private static android.os.Handler maxDurationHandler;
   private static Runnable maxDurationRunnable;
@@ -111,6 +115,23 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
     }
   }
 
+  private static android.view.animation.Interpolator getScaleInterpolator() {
+    if (scaleEasing == null) {
+      return new android.view.animation.AccelerateDecelerateInterpolator();
+    }
+    switch (scaleEasing) {
+      case "linear":
+        return new android.view.animation.LinearInterpolator();
+      case "easeIn":
+        return new android.view.animation.AccelerateInterpolator();
+      case "easeOut":
+        return new android.view.animation.DecelerateInterpolator();
+      case "easeInOut":
+      default:
+        return new android.view.animation.AccelerateDecelerateInterpolator();
+    }
+  }
+
   public static void show(Activity activity) {
     try {
       if (activity == null || activity.isFinishing()) return;
@@ -136,6 +157,13 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
       String backgroundColor = json.optString("backgroundColor", null);
       fadeEnabled = json.optBoolean("enableFade", true);
       fadeDurationMs = json.optInt("fadeDurationMs", 200);
+      scaleStart = json.has("scaleStart") ? (float) json.optDouble("scaleStart") : null;
+      scaleEnd = json.has("scaleEnd") ? (float) json.optDouble("scaleEnd") : null;
+      scaleDurationMs = json.has("scaleDurationMs") ? json.optInt("scaleDurationMs") : null;
+      scaleEasing = json.has("scaleEasing") ? json.optString("scaleEasing", null) : null;
+      if (scaleEasing != null && scaleEasing.isEmpty()) {
+        scaleEasing = null;
+      }
       int minDurationMs = json.optInt("minDurationMs", 0);
       int maxDurationMs = json.optInt("maxDurationMs", 0);
       
@@ -151,6 +179,28 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
         window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
       }
       overlayDialog.show();
+
+      // Apply scale-in animation if configured
+      if (scaleStart != null && scaleEnd != null && scaleDurationMs != null) {
+        if (window != null) {
+          View decorView = window.getDecorView();
+          if (decorView != null) {
+            decorView.setScaleX(scaleStart);
+            decorView.setScaleY(scaleStart);
+            if (scaleDurationMs > 0) {
+              decorView.animate()
+                .scaleX(scaleEnd)
+                .scaleY(scaleEnd)
+                .setDuration(scaleDurationMs)
+                .setInterpolator(getScaleInterpolator())
+                .start();
+            } else {
+              decorView.setScaleX(scaleEnd);
+              decorView.setScaleY(scaleEnd);
+            }
+          }
+        }
+      }
       
       // Set up auto-hide timer if maxDurationMs is specified
       if (maxDurationMs > 0) {

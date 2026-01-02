@@ -17,7 +17,17 @@
     "imageUrl": "https://picsum.photos/seed/taxi/1080/1920",
     "configVersion": "2026.01.0",
     "backgroundColor": "#101828",
-    "weight": 1
+    "weight": 3
+  },
+  {
+    "imageName": "mobility-commute-pass-2026q1",
+    "alt": "Mobility app splash: Commute Pass — save on weekday rides. 2",
+    "startAt": "2026-01-10T00:00:00Z",
+    "endAt": "2099-02-29T23:59:59Z",
+    "imageUrl": "https://picsum.photos/seed/hello/1080/1920",
+    "configVersion": "2026.01.0",
+    "backgroundColor": "#101828",
+    "weight": 4
   },
   {
     "imageName": "mobility-safety-update-2026q1",
@@ -27,6 +37,6 @@
     "imageUrl": "https://www.easygifanimator.net/images/samples/video-to-gif-sample.gif",
     "configVersion": "2026.01.0",
     "backgroundColor": "#0A0F1F",
-    "weight": 4
+    "weight": 1
   }
 ]
