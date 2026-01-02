@@ -1,8 +1,8 @@
-# 가장 큰 원인
+# Primary exclusions
 samples
 samples/**
 
-# 개발/캐시
+# Development/cache
 node_modules
 node_modules/**
 .yarn
@@ -14,7 +14,7 @@ node_modules/**
 .git
 .git/**
 
-# RN 빌드 산출물/캐시
+# React Native build artifacts/cache
 **/build
 **/.gradle
 **/Pods

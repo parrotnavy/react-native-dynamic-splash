@@ -258,9 +258,7 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
     } catch (Exception e) {
       // Ensure cleanup even if animation or dismiss fails
       try {
-        if (overlayDialog != null) {
-          overlayDialog.dismiss();
-        }
+        overlayDialog.dismiss();
       } catch (Exception ignored) {}
       overlayDialog = null;
       showStartTime = 0;
@@ -299,10 +297,8 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
         }
       });
     } catch (Exception e) {
-      // Silently fail - ensure hideInternal is called even if runOnUiThread fails
-      try {
-        DynamicSplashNativeModule.hideInternal();
-      } catch (Exception ignored) {}
+      // Silently fail - if runOnUiThread fails, we cannot safely call hideInternal
+      // as it manipulates UI elements and must run on the UI thread
     }
   }
 
