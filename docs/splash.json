@@ -7,7 +7,7 @@
     "imageUrl": "https://picsum.photos/seed/taxi/1080/1920",
     "configVersion": "2026.01.0",
     "backgroundColor": "#0B1220",
-    "weight": 6
+    "weight": 2
   },
   {
     "imageName": "mobility-commute-pass-2026q1",
@@ -17,16 +17,16 @@
     "imageUrl": "https://picsum.photos/seed/taxi/1080/1920",
     "configVersion": "2026.01.0",
     "backgroundColor": "#101828",
-    "weight": 3
+    "weight": 1
   },
   {
     "imageName": "mobility-safety-update-2026q1",
     "alt": "Mobility app splash: Safety update — improved driver verification and trip sharing.",
-    "startAt": "2026-02-01T00:00:00Z",
+    "startAt": "2026-01-01T00:00:00Z",
     "endAt": "2080-04-30T23:59:59Z",
-    "imageUrl": "https://cdn.example.com/dynamic-splash/mobility/safety-update-2026q1/1080x1920.png",
-    "configVersion": "2026.02.0",
+    "imageUrl": "https://www.easygifanimator.net/images/samples/video-to-gif-sample.gif",
+    "configVersion": "2026.01.0",
     "backgroundColor": "#0A0F1F",
-    "weight": 1
+    "weight": 4
   }
 ]

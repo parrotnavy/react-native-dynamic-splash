@@ -18,7 +18,7 @@ const server = http.createServer((req, res) => {
   let filename = req.url.substring(1); // remove leading slash
   if (filename === '') filename = 'index.html';
   
-  const filePath = path.join(__dirname, 'mock-api', filename);
+  const filePath = path.join(__dirname, '../../docs', filename);
 
   fs.readFile(filePath, (err, data) => {
     if (err) {
