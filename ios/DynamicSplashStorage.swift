@@ -18,11 +18,7 @@ public class DynamicSplashStorage: NSObject, RCTBridgeModule {
       return nil
     }
     
-    do {
-      return UserDefaults.standard.string(forKey: key)
-    } catch {
-      return nil
-    }
+    return UserDefaults.standard.string(forKey: key)
   }
 
   @objc(getString:resolver:rejecter:)
@@ -32,12 +28,8 @@ public class DynamicSplashStorage: NSObject, RCTBridgeModule {
       return
     }
     
-    do {
-      let value = UserDefaults.standard.string(forKey: key)
-      resolve(value)
-    } catch {
-      resolve(nil)
-    }
+    let value = UserDefaults.standard.string(forKey: key)
+    resolve(value)
   }
 
   @objc(setString:value:)
@@ -46,11 +38,7 @@ public class DynamicSplashStorage: NSObject, RCTBridgeModule {
       return
     }
     
-    do {
-      UserDefaults.standard.set(value, forKey: key)
-    } catch {
-      // Silently fail to prevent crashes
-    }
+    UserDefaults.standard.set(value, forKey: key)
   }
 
   @objc(remove:)
@@ -59,10 +47,6 @@ public class DynamicSplashStorage: NSObject, RCTBridgeModule {
       return
     }
     
-    do {
-      UserDefaults.standard.removeObject(forKey: key)
-    } catch {
-      // Silently fail to prevent crashes
-    }
+    UserDefaults.standard.removeObject(forKey: key)
   }
 }

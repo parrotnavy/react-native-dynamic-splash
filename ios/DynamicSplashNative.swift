@@ -73,13 +73,12 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
     return images.isEmpty ? nil : (images, totalDuration)
   }
   
-  private static func overlayView(imagePath: String?, backgroundColor: UIColor?) -> UIView? {
-    // Safely get screen bounds
-    guard Thread.isMainThread else {
-      return nil
-    }
+  private static func overlayView(imagePath: String?, backgroundColor: UIColor?) -> UIView {
+    // Safely get screen bounds - ensure we're on main thread if possible
+    // but don't fail if we're not, just create with default bounds
+    let screenBounds = Thread.isMainThread ? UIScreen.main.bounds : CGRect(x: 0, y: 0, width: 375, height: 812)
     
-    let container = UIView(frame: UIScreen.main.bounds)
+    let container = UIView(frame: screenBounds)
     container.backgroundColor = backgroundColor ?? .white
 
     if let imagePath = imagePath, !imagePath.isEmpty {
@@ -249,9 +248,7 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
       showStartTime = Date()
       
       // Create overlay view safely
-      guard let overlayContentView = overlayView(imagePath: meta.imagePath, backgroundColor: meta.backgroundColor) else {
-        return
-      }
+      let overlayContentView = overlayView(imagePath: meta.imagePath, backgroundColor: meta.backgroundColor)
       
       // Create window and view controller
       let window = UIWindow(frame: UIScreen.main.bounds)
