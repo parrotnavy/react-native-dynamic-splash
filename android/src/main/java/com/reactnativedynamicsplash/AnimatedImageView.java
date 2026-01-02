@@ -28,52 +28,70 @@ public class AnimatedImageView extends ImageView {
   }
 
   public void setImagePath(String path) {
-    if (path == null || path.isEmpty()) {
-      return;
-    }
+    try {
+      if (path == null || path.isEmpty()) {
+        return;
+      }
 
-    File file = new File(path);
-    if (!file.exists()) {
-      return;
-    }
+      File file = new File(path);
+      if (!file.exists()) {
+        return;
+      }
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-      try {
-        ImageDecoder.Source source = ImageDecoder.createSource(file);
-        Drawable drawable = ImageDecoder.decodeDrawable(source);
-        
-        if (drawable instanceof AnimatedImageDrawable) {
-          animatedDrawable = (AnimatedImageDrawable) drawable;
-          animatedDrawable.setRepeatCount(AnimatedImageDrawable.REPEAT_INFINITE);
-          setImageDrawable(animatedDrawable);
-          animatedDrawable.start();
-        } else {
-          setImageDrawable(drawable);
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        try {
+          ImageDecoder.Source source = ImageDecoder.createSource(file);
+          Drawable drawable = ImageDecoder.decodeDrawable(source);
+          
+          if (drawable instanceof AnimatedImageDrawable) {
+            animatedDrawable = (AnimatedImageDrawable) drawable;
+            animatedDrawable.setRepeatCount(AnimatedImageDrawable.REPEAT_INFINITE);
+            setImageDrawable(animatedDrawable);
+            animatedDrawable.start();
+          } else {
+            setImageDrawable(drawable);
+          }
+        } catch (IOException e) {
+          // Silently handle IO errors - image loading is non-critical
+        } catch (OutOfMemoryError e) {
+          // Silently handle OOM - image might be too large
         }
-      } catch (IOException e) {
-        e.printStackTrace();
+      } else {
+        try {
+          android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(path);
+          if (bitmap != null) {
+            setImageBitmap(bitmap);
+          }
+        } catch (OutOfMemoryError e) {
+          // Silently handle OOM - image might be too large
+        }
       }
-    } else {
-      android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(path);
-      if (bitmap != null) {
-        setImageBitmap(bitmap);
-      }
+    } catch (Exception e) {
+      // Silently handle any other unexpected exceptions
     }
   }
 
   @Override
   protected void onDetachedFromWindow() {
     super.onDetachedFromWindow();
-    if (animatedDrawable != null) {
-      animatedDrawable.stop();
+    try {
+      if (animatedDrawable != null) {
+        animatedDrawable.stop();
+      }
+    } catch (Exception e) {
+      // Silently ignore errors when stopping animation
     }
   }
 
   @Override
   protected void onAttachedToWindow() {
     super.onAttachedToWindow();
-    if (animatedDrawable != null) {
-      animatedDrawable.start();
+    try {
+      if (animatedDrawable != null) {
+        animatedDrawable.start();
+      }
+    } catch (Exception e) {
+      // Silently ignore errors when starting animation
     }
   }
 }

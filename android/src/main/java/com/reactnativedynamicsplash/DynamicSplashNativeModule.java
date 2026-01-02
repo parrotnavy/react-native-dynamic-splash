@@ -47,27 +47,39 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
   }
 
   private static View createOverlayView(Activity activity, String imagePath, String backgroundColor) {
-    FrameLayout container = new FrameLayout(activity);
-    int color = parseColor(backgroundColor);
-    container.setBackgroundColor(color);
+    try {
+      FrameLayout container = new FrameLayout(activity);
+      int color = parseColor(backgroundColor);
+      container.setBackgroundColor(color);
 
-    AnimatedImageView imageView = new AnimatedImageView(activity);
-    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-    imageView.setImagePath(imagePath);
-    imageView.setLayoutParams(
-      new FrameLayout.LayoutParams(
-        FrameLayout.LayoutParams.MATCH_PARENT,
-        FrameLayout.LayoutParams.MATCH_PARENT
-      )
-    );
-    container.addView(imageView);
-    return container;
+      AnimatedImageView imageView = new AnimatedImageView(activity);
+      imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+      imageView.setImagePath(imagePath);
+      imageView.setLayoutParams(
+        new FrameLayout.LayoutParams(
+          FrameLayout.LayoutParams.MATCH_PARENT,
+          FrameLayout.LayoutParams.MATCH_PARENT
+        )
+      );
+      container.addView(imageView);
+      return container;
+    } catch (Exception e) {
+      // Return a simple fallback view to prevent crashes
+      FrameLayout fallback = new FrameLayout(activity);
+      fallback.setBackgroundColor(Color.WHITE);
+      return fallback;
+    }
   }
 
   private static String getStoredMeta(Activity activity) {
-    return activity
-      .getSharedPreferences(StorageConstants.PREFS_NAME, Activity.MODE_PRIVATE)
-      .getString(storageKey, null);
+    try {
+      if (activity == null) return null;
+      return activity
+        .getSharedPreferences(StorageConstants.PREFS_NAME, Activity.MODE_PRIVATE)
+        .getString(storageKey, null);
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   private static long parseDate(String text) {
@@ -100,13 +112,14 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
   }
 
   public static void show(Activity activity) {
-    if (activity == null || activity.isFinishing()) return;
-    if (overlayDialog != null && overlayDialog.isShowing()) return;
-
-    String raw = getStoredMeta(activity);
-    lastLoadedMetaRaw = raw;
-    if (raw == null) return;
     try {
+      if (activity == null || activity.isFinishing()) return;
+      if (overlayDialog != null && overlayDialog.isShowing()) return;
+
+      String raw = getStoredMeta(activity);
+      lastLoadedMetaRaw = raw;
+      if (raw == null) return;
+      
       JSONObject json = new JSONObject(raw);
       if (!"READY".equals(json.optString("status"))) return;
 
@@ -153,68 +166,104 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
         };
         maxDurationHandler.postDelayed(maxDurationRunnable, maxDurationMs);
       }
-    } catch (Exception ignored) {
-      return;
+    } catch (Exception e) {
+      // Silently fail to prevent crashes - splash is optional
+      overlayDialog = null;
+      showStartTime = 0;
     }
   }
 
   private static void hideInternal() {
-    if (overlayDialog != null && overlayDialog.isShowing()) {
-      // Cancel max duration timer if it exists
-      if (maxDurationHandler != null && maxDurationRunnable != null) {
-        maxDurationHandler.removeCallbacks(maxDurationRunnable);
-        maxDurationHandler = null;
-        maxDurationRunnable = null;
+    try {
+      if (overlayDialog != null && overlayDialog.isShowing()) {
+        // Cancel max duration timer if it exists
+        if (maxDurationHandler != null && maxDurationRunnable != null) {
+          maxDurationHandler.removeCallbacks(maxDurationRunnable);
+          maxDurationHandler = null;
+          maxDurationRunnable = null;
+        }
+        
+        // Check if minimum duration has elapsed
+        String raw = overlayDialog.getContext() instanceof Activity ? 
+          getStoredMeta((Activity) overlayDialog.getContext()) : null;
+        int minDurationMs = 0;
+        if (raw != null) {
+          try {
+            JSONObject json = new JSONObject(raw);
+            minDurationMs = json.optInt("minDurationMs", 0);
+          } catch (Exception ignored) {}
+        }
+        
+        long elapsed = System.currentTimeMillis() - showStartTime;
+        long remaining = minDurationMs - elapsed;
+        
+        if (remaining > 0) {
+          new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override
+            public void run() {
+              performHide();
+            }
+          }, remaining);
+        } else {
+          performHide();
+        }
       }
-      
-      // Check if minimum duration has elapsed
-      String raw = overlayDialog.getContext() instanceof Activity ? 
-        getStoredMeta((Activity) overlayDialog.getContext()) : null;
-      int minDurationMs = 0;
-      if (raw != null) {
-        try {
-          JSONObject json = new JSONObject(raw);
-          minDurationMs = json.optInt("minDurationMs", 0);
-        } catch (Exception ignored) {}
-      }
-      
-      long elapsed = System.currentTimeMillis() - showStartTime;
-      long remaining = minDurationMs - elapsed;
-      
-      if (remaining > 0) {
-        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
-          @Override
-          public void run() {
-            performHide();
-          }
-        }, remaining);
-      } else {
-        performHide();
-      }
+    } catch (Exception e) {
+      // Ensure cleanup even if hiding fails
+      try {
+        if (overlayDialog != null) {
+          overlayDialog.dismiss();
+        }
+      } catch (Exception ignored) {}
+      overlayDialog = null;
+      showStartTime = 0;
     }
   }
   
   private static void performHide() {
-    if (overlayDialog != null && overlayDialog.isShowing()) {
-      if (fadeEnabled && fadeDurationMs > 0) {
-        View decorView = overlayDialog.getWindow().getDecorView();
-        decorView.animate()
-          .alpha(0f)
-          .setDuration(fadeDurationMs)
-          .withEndAction(new Runnable() {
-            @Override
-            public void run() {
-              overlayDialog.dismiss();
-              overlayDialog = null;
-              showStartTime = 0;
+    try {
+      if (overlayDialog != null && overlayDialog.isShowing()) {
+        if (fadeEnabled && fadeDurationMs > 0) {
+          Window window = overlayDialog.getWindow();
+          if (window != null) {
+            View decorView = window.getDecorView();
+            if (decorView != null) {
+              decorView.animate()
+                .alpha(0f)
+                .setDuration(fadeDurationMs)
+                .withEndAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    try {
+                      if (overlayDialog != null) {
+                        overlayDialog.dismiss();
+                      }
+                    } catch (Exception e) {
+                      // Ignore dismiss errors
+                    }
+                    overlayDialog = null;
+                    showStartTime = 0;
+                  }
+                })
+                .start();
+              return;
             }
-          })
-          .start();
-      } else {
+          }
+        }
+        // Fallback to direct dismiss if fade fails or is disabled
         overlayDialog.dismiss();
         overlayDialog = null;
         showStartTime = 0;
       }
+    } catch (Exception e) {
+      // Ensure cleanup even if animation or dismiss fails
+      try {
+        if (overlayDialog != null) {
+          overlayDialog.dismiss();
+        }
+      } catch (Exception ignored) {}
+      overlayDialog = null;
+      showStartTime = 0;
     }
   }
 
@@ -230,40 +279,67 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void show() {
-    Activity activity = getCurrentActivity();
-    show(activity);
+    try {
+      Activity activity = getCurrentActivity();
+      show(activity);
+    } catch (Exception e) {
+      // Silently fail - splash is optional
+    }
   }
 
   @ReactMethod
   public void hide() {
-    Activity activity = getCurrentActivity();
-    if (activity == null) return;
-    activity.runOnUiThread(new Runnable() {
-      @Override
-      public void run() {
+    try {
+      Activity activity = getCurrentActivity();
+      if (activity == null) return;
+      activity.runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          DynamicSplashNativeModule.hideInternal();
+        }
+      });
+    } catch (Exception e) {
+      // Silently fail - ensure hideInternal is called even if runOnUiThread fails
+      try {
         DynamicSplashNativeModule.hideInternal();
-      }
-    });
+      } catch (Exception ignored) {}
+    }
   }
 
   @ReactMethod
   public void setStorageKey(String key) {
-    DynamicSplashNativeModule.setStorageKeyInternal(key);
+    try {
+      DynamicSplashNativeModule.setStorageKeyInternal(key);
+    } catch (Exception e) {
+      // Silently fail
+    }
   }
 
   @ReactMethod(isBlockingSynchronousMethod = true)
   public String getStorageKey() {
-    return getStorageKeyValue();
+    try {
+      return getStorageKeyValue();
+    } catch (Exception e) {
+      return StorageConstants.DEFAULT_STORAGE_KEY;
+    }
   }
 
   @ReactMethod
   public void getLastLoadedMeta(Promise promise) {
-    promise.resolve(lastLoadedMetaRaw);
+    try {
+      promise.resolve(lastLoadedMetaRaw);
+    } catch (Exception e) {
+      promise.reject("META_ERROR", "Failed to get last loaded meta", e);
+    }
   }
   
   @ReactMethod
   public void isShowing(Promise promise) {
-    boolean showing = overlayDialog != null && overlayDialog.isShowing();
-    promise.resolve(showing);
+    try {
+      boolean showing = overlayDialog != null && overlayDialog.isShowing();
+      promise.resolve(showing);
+    } catch (Exception e) {
+      promise.reject("STATUS_ERROR", "Failed to check if showing", e);
+    }
   }
 }

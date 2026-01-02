@@ -178,4 +178,9 @@ fix_*.patch
 
 android/build
 
+# Gradle wrapper (generated)
+android/gradle/
+android/gradlew
+android/gradlew.bat
+
 dist/

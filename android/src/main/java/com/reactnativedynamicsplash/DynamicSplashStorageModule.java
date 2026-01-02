@@ -24,33 +24,73 @@ public class DynamicSplashStorageModule extends ReactContextBaseJavaModule {
   }
 
   private SharedPreferences getPrefs() {
-    Context context = getReactApplicationContext();
-    return context.getSharedPreferences(StorageConstants.PREFS_NAME, Context.MODE_PRIVATE);
+    try {
+      Context context = getReactApplicationContext();
+      if (context == null) {
+        return null;
+      }
+      return context.getSharedPreferences(StorageConstants.PREFS_NAME, Context.MODE_PRIVATE);
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   @ReactMethod(isBlockingSynchronousMethod = true)
   public String getStringSync(String key) {
-    return getPrefs().getString(key, null);
+    try {
+      SharedPreferences prefs = getPrefs();
+      if (prefs == null) {
+        return null;
+      }
+      return prefs.getString(key, null);
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   @ReactMethod
   public void getString(String key, Promise promise) {
-    promise.resolve(getPrefs().getString(key, null));
+    try {
+      SharedPreferences prefs = getPrefs();
+      if (prefs == null) {
+        promise.resolve(null);
+        return;
+      }
+      promise.resolve(prefs.getString(key, null));
+    } catch (Exception e) {
+      promise.reject("STORAGE_ERROR", "Failed to get string from storage", e);
+    }
   }
 
   @ReactMethod
   public void setString(String key, String value) {
-    SharedPreferences.Editor editor = getPrefs().edit();
-    if (value == null) {
-      editor.remove(key);
-    } else {
-      editor.putString(key, value);
+    try {
+      SharedPreferences prefs = getPrefs();
+      if (prefs == null) {
+        return;
+      }
+      SharedPreferences.Editor editor = prefs.edit();
+      if (value == null) {
+        editor.remove(key);
+      } else {
+        editor.putString(key, value);
+      }
+      editor.apply();
+    } catch (Exception e) {
+      // Silently fail - storage operations are non-critical
     }
-    editor.apply();
   }
 
   @ReactMethod
   public void remove(String key) {
-    getPrefs().edit().remove(key).apply();
+    try {
+      SharedPreferences prefs = getPrefs();
+      if (prefs == null) {
+        return;
+      }
+      prefs.edit().remove(key).apply();
+    } catch (Exception e) {
+      // Silently fail - storage operations are non-critical
+    }
   }
 }
