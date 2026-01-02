@@ -17,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      - name: Update npm to latest version for OIDC support
+        run: npm install -g npm@latest
+      
       - name: Checkout code
         uses: actions/checkout@v4
       
