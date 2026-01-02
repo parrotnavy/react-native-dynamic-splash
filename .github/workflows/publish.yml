@@ -2,8 +2,11 @@ name: Publish Package
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+    paths-ignore:
+      - 'samples/**'
+      - 'docs/**'
 
 permissions:
   id-token: write  # Required for OIDC
@@ -21,4 +24,5 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
       - run: npm run build --if-present
+      - run: npm test
       - run: npm publish
