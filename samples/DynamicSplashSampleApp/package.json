@@ -11,10 +11,10 @@
     "mock-server": "node server.js"
   },
   "dependencies": {
+    "@parrotnavy/react-native-dynamic-splash": "^0.8.1",
     "@react-native/new-app-screen": "0.83.1",
     "react": "19.2.0",
     "react-native": "0.83.1",
-    "react-native-dynamic-splash": "file:../..",
     "react-native-fs": "^2.20.0",
     "react-native-safe-area-context": "^5.5.2"
   },

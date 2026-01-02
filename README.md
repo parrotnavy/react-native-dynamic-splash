@@ -1,6 +1,10 @@
 # 💐 React Native Dynamic Splash
 
 [![mit licence](https://img.shields.io/dub/l/vibe-d.svg?style=for-the-badge)](https://github.com/parrotnavy/react-native-dynamic-splash/blob/main/LICENSE)
+[![npm version](https://img.shields.io/npm/v/@parrotnavy/react-native-dynamic-splash?style=for-the-badge)](https://www.npmjs.com/package/@parrotnavy/react-native-dynamic-splash)
+
+<!-- [![npm downloads](https://img.shields.io/npm/dt/@parrotnavy/react-native-dynamic-splash.svg?label=downloads&style=for-the-badge)](https://www.npmjs.com/package/@parrotnavy/react-native-dynamic-splash) -->
+
 [![platform - android](https://img.shields.io/badge/platform-Android-3ddc84.svg?logo=android&style=for-the-badge)](https://www.android.com)
 [![platform - ios](https://img.shields.io/badge/platform-iOS-000.svg?logo=apple&style=for-the-badge)](https://developer.apple.com/ios)
 
