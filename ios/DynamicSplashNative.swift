@@ -18,7 +18,14 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
   }
 
   private static func loadAnimatedImage(from path: String) -> (images: [UIImage], duration: TimeInterval)? {
-    guard let imageSource = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, nil) else {
+    // Guard against empty path
+    guard !path.isEmpty else {
+      return nil
+    }
+    
+    // Safely create URL and image source
+    guard let url = URL(string: "file://\(path)"),
+          let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil) else {
       return nil
     }
     
@@ -29,48 +36,73 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
     var totalDuration: TimeInterval = 0
     
     for i in 0..<frameCount {
-      guard let cgImage = CGImageSourceCreateImageAtIndex(imageSource, i, nil) else { continue }
+      // Safely create CGImage at index
+      guard let cgImage = CGImageSourceCreateImageAtIndex(imageSource, i, nil) else { 
+        continue 
+      }
       
       let image = UIImage(cgImage: cgImage)
       images.append(image)
       
-      if let properties = CGImageSourceCopyPropertiesAtIndex(imageSource, i, nil) as? [String: Any],
-         let gifInfo = properties[kCGImagePropertyGIFDictionary as String] as? [String: Any] {
-        let frameDuration = gifInfo[kCGImagePropertyGIFUnclampedDelayTime as String] as? TimeInterval
-          ?? gifInfo[kCGImagePropertyGIFDelayTime as String] as? TimeInterval
-          ?? 0.1
-        totalDuration += frameDuration
-      } else if let properties = CGImageSourceCopyPropertiesAtIndex(imageSource, i, nil) as? [String: Any],
-                let pngInfo = properties[kCGImagePropertyPNGDictionary as String] as? [String: Any] {
-        let frameDuration = pngInfo[kCGImagePropertyAPNGUnclampedDelayTime as String] as? TimeInterval
-          ?? pngInfo[kCGImagePropertyAPNGDelayTime as String] as? TimeInterval
-          ?? 0.1
-        totalDuration += frameDuration
-      } else {
-        totalDuration += 0.1
+      // Safely extract frame duration with proper error handling
+      var frameDuration: TimeInterval = 0.1
+      
+      if let properties = CGImageSourceCopyPropertiesAtIndex(imageSource, i, nil) as? [String: Any] {
+        // Try GIF properties first
+        if let gifInfo = properties[kCGImagePropertyGIFDictionary as String] as? [String: Any] {
+          frameDuration = gifInfo[kCGImagePropertyGIFUnclampedDelayTime as String] as? TimeInterval
+            ?? gifInfo[kCGImagePropertyGIFDelayTime as String] as? TimeInterval
+            ?? 0.1
+        }
+        // Try APNG properties if GIF properties not found
+        else if let pngInfo = properties[kCGImagePropertyPNGDictionary as String] as? [String: Any] {
+          frameDuration = pngInfo[kCGImagePropertyAPNGUnclampedDelayTime as String] as? TimeInterval
+            ?? pngInfo[kCGImagePropertyAPNGDelayTime as String] as? TimeInterval
+            ?? 0.1
+        }
       }
+      
+      // Ensure duration is positive and reasonable
+      if frameDuration <= 0 || frameDuration > 10.0 {
+        frameDuration = 0.1
+      }
+      
+      totalDuration += frameDuration
     }
     
     return images.isEmpty ? nil : (images, totalDuration)
   }
   
   private static func overlayView(imagePath: String?, backgroundColor: UIColor?) -> UIView {
-    let container = UIView(frame: UIScreen.main.bounds)
+    // Safely get screen bounds - ensure we're on main thread if possible
+    // but don't fail if we're not, just create with default bounds
+    let screenBounds = Thread.isMainThread ? UIScreen.main.bounds : CGRect(x: 0, y: 0, width: 375, height: 812)
+    
+    let container = UIView(frame: screenBounds)
     container.backgroundColor = backgroundColor ?? .white
 
-    if let imagePath {
+    if let imagePath = imagePath, !imagePath.isEmpty {
+      // Verify file exists before attempting to load
+      guard FileManager.default.fileExists(atPath: imagePath) else {
+        return container
+      }
+      
       let imageView = UIImageView(frame: container.bounds)
       imageView.contentMode = .scaleAspectFill
       imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
       
+      // Try loading animated image first
       if let animatedData = loadAnimatedImage(from: imagePath) {
         imageView.animationImages = animatedData.images
         imageView.animationDuration = animatedData.duration
         imageView.animationRepeatCount = 0
         imageView.startAnimating()
-      } else if let staticImage = UIImage(contentsOfFile: imagePath) {
+      } 
+      // Fallback to static image
+      else if let staticImage = UIImage(contentsOfFile: imagePath) {
         imageView.image = staticImage
       }
+      // If both fail, return container without image
       
       container.addSubview(imageView)
     }
@@ -79,29 +111,42 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
   }
 
   private static func parseDate(_ value: Any?) -> Date? {
-    guard let text = value as? String else { return nil }
+    guard let text = value as? String, !text.isEmpty else { 
+      return nil 
+    }
 
+    // Try with fractional seconds first
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     if let date = formatter.date(from: text) {
       return date
     }
 
+    // Fallback to without fractional seconds
     let fallback = ISO8601DateFormatter()
     fallback.formatOptions = [.withInternetDateTime]
     return fallback.date(from: text)
   }
 
   private static func parseColor(_ value: Any?) -> UIColor? {
-    guard let hex = value as? String else { return nil }
+    guard let hex = value as? String, !hex.isEmpty else { 
+      return nil 
+    }
+    
     var cleaned = hex.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
     if cleaned.hasPrefix("#") {
       cleaned.removeFirst()
     }
-    guard cleaned.count == 6 || cleaned.count == 8 else { return nil }
+    
+    // Only accept 6 or 8 character hex codes
+    guard cleaned.count == 6 || cleaned.count == 8 else { 
+      return nil 
+    }
 
     var hexValue: UInt64 = 0
-    guard Scanner(string: cleaned).scanHexInt64(&hexValue) else { return nil }
+    guard Scanner(string: cleaned).scanHexInt64(&hexValue) else { 
+      return nil 
+    }
 
     if cleaned.count == 6 {
       let r = CGFloat((hexValue & 0xFF0000) >> 16) / 255.0
@@ -110,6 +155,7 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
       return UIColor(red: r, green: g, blue: b, alpha: 1.0)
     }
 
+    // 8 character hex with alpha
     let a = CGFloat((hexValue & 0xFF000000) >> 24) / 255.0
     let r = CGFloat((hexValue & 0x00FF0000) >> 16) / 255.0
     let g = CGFloat((hexValue & 0x0000FF00) >> 8) / 255.0
@@ -118,36 +164,63 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
   }
 
   private static func loadReadyMeta() -> (imagePath: String, backgroundColor: UIColor?, enableFade: Bool, fadeDurationMs: Double, minDurationMs: Double?, maxDurationMs: Double?)? {
-    guard
-      let raw = UserDefaults.standard.string(forKey: storageKey),
-      let data = raw.data(using: .utf8),
-      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-    else {
+    // Safely load from UserDefaults
+    guard let raw = UserDefaults.standard.string(forKey: storageKey),
+          !raw.isEmpty,
+          let data = raw.data(using: .utf8) else {
+      lastLoadedMetaRaw = nil
+      return nil
+    }
+    
+    // Safely parse JSON
+    guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
       lastLoadedMetaRaw = nil
       return nil
     }
 
     lastLoadedMetaRaw = raw
-    guard (json["status"] as? String) == "READY" else { return nil }
+    
+    // Check status
+    guard let status = json["status"] as? String, status == "READY" else { 
+      return nil 
+    }
 
+    // Validate dates
     let now = Date()
-    guard
-      let start = parseDate(json["startAt"]),
-      let end = parseDate(json["endAt"]),
-      now >= start,
-      now <= end
-    else {
+    guard let start = parseDate(json["startAt"]),
+          let end = parseDate(json["endAt"]),
+          now >= start,
+          now <= end else {
       return nil
     }
 
-    guard let localPath = json["localPath"] as? String else { return nil }
-    guard FileManager.default.fileExists(atPath: localPath) else { return nil }
+    // Validate local path
+    guard let localPath = json["localPath"] as? String,
+          !localPath.isEmpty else { 
+      return nil 
+    }
+    
+    // Verify file exists
+    guard FileManager.default.fileExists(atPath: localPath) else { 
+      return nil 
+    }
 
+    // Parse optional display settings with safe defaults
     let backgroundColor = parseColor(json["backgroundColor"])
     let enableFade = json["enableFade"] as? Bool ?? true
     let fadeDurationMs = json["fadeDurationMs"] as? Double ?? 200.0
-    let minDurationMs = json["minDurationMs"] as? Double
-    let maxDurationMs = json["maxDurationMs"] as? Double
+    
+    // Parse optional timing constraints
+    var minDurationMs: Double? = nil
+    if let min = json["minDurationMs"] as? Double, min > 0 {
+      minDurationMs = min
+    }
+    
+    var maxDurationMs: Double? = nil
+    if let max = json["maxDurationMs"] as? Double, max > 0 {
+      maxDurationMs = max
+    }
+    
     return (localPath, backgroundColor, enableFade, fadeDurationMs, minDurationMs, maxDurationMs)
   }
 
@@ -159,17 +232,29 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
   @objc
   public static func show() {
     DispatchQueue.main.async {
-      if overlayWindow != nil { return }
-      guard let meta = loadReadyMeta() else { return }
+      // Prevent showing multiple overlays
+      if overlayWindow != nil { 
+        return 
+      }
+      
+      // Load metadata safely
+      guard let meta = loadReadyMeta() else { 
+        return 
+      }
 
+      // Store fade settings
       fadeEnabled = meta.enableFade
       fadeDuration = meta.fadeDurationMs / 1000.0
       showStartTime = Date()
       
+      // Create overlay view safely
+      let overlayContentView = overlayView(imagePath: meta.imagePath, backgroundColor: meta.backgroundColor)
+      
+      // Create window and view controller
       let window = UIWindow(frame: UIScreen.main.bounds)
       window.windowLevel = UIWindow.Level.statusBar + 1
       let viewController = UIViewController()
-      viewController.view = overlayView(imagePath: meta.imagePath, backgroundColor: meta.backgroundColor)
+      viewController.view = overlayContentView
       window.rootViewController = viewController
       window.makeKeyAndVisible()
       overlayWindow = window
@@ -187,14 +272,17 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
   @objc
   public static func hide() {
     DispatchQueue.main.async {
-      guard let window = overlayWindow else { return }
+      // Check if window exists
+      guard let window = overlayWindow else { 
+        return 
+      }
       
       // Cancel max duration timer if it exists
       maxDurationTimer?.invalidate()
       maxDurationTimer = nil
       
       let performHide = {
-        if fadeEnabled {
+        if fadeEnabled && fadeDuration > 0 {
           UIView.animate(withDuration: fadeDuration, animations: {
             window.alpha = 0
           }, completion: { _ in
@@ -203,6 +291,7 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
             overlayWindow = nil
             showStartTime = nil
             
+            // Restore app window safely
             if let appDelegate = UIApplication.shared.delegate,
                let appWindow = appDelegate.window as? UIWindow {
               appWindow.makeKeyAndVisible()
@@ -214,6 +303,7 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
           overlayWindow = nil
           showStartTime = nil
           
+          // Restore app window safely
           if let appDelegate = UIApplication.shared.delegate,
              let appWindow = appDelegate.window as? UIWindow {
             appWindow.makeKeyAndVisible()
@@ -230,6 +320,7 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
         let remaining = minDurationMs - elapsed
         
         if remaining > 0 {
+          // Schedule hide after remaining time
           DispatchQueue.main.asyncAfter(deadline: .now() + (remaining / 1000.0)) {
             performHide()
           }
@@ -237,6 +328,7 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
         }
       }
       
+      // No minimum duration or already elapsed
       performHide()
     }
   }
@@ -258,7 +350,9 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
   
   @objc(isShowing:rejecter:)
   public func isShowing(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
-    resolve(Self.isShowing())
+    DispatchQueue.main.async {
+      resolve(Self.isShowing())
+    }
   }
 
   @objc
@@ -280,11 +374,15 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
 
   @objc(getStorageKey:rejecter:)
   public func getStorageKey(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
-    resolve(Self.getStorageKey())
+    DispatchQueue.main.async {
+      resolve(Self.getStorageKey())
+    }
   }
 
   @objc(getLastLoadedMeta:rejecter:)
   public func getLastLoadedMeta(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
-    resolve(Self.lastLoadedMetaRaw)
+    DispatchQueue.main.async {
+      resolve(Self.lastLoadedMetaRaw)
+    }
   }
 }
