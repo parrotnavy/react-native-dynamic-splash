@@ -1,39 +1,24 @@
-name: Publish to npm
+name: Publish Package
 
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - 'samples/**'
-      - 'docs/**'
+    tags:
+      - 'v*'
 
 permissions:
-  id-token: write
+  id-token: write  # Required for OIDC
   contents: read
 
 jobs:
-  build-and-publish:
+  publish:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Update npm to latest version for OIDC support
-        run: npm install npm@latest
-      
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build
-        run: npm run build
-      
-      - name: Publish to npm
-        run: npm publish
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm publish
