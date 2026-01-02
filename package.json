@@ -41,7 +41,15 @@
     "ios/",
     "react-native-dynamic-splash.podspec",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "!samples",
+    "!samples/**",
+    "!**/node_modules",
+    "!**/build",
+    "!**/.gradle",
+    "!**/Pods",
+    "!**/DerivedData",
+    "!.git"
   ],
   "repository": {
     "type": "git",

@@ -1,0 +1,21 @@
+# 가장 큰 원인
+samples
+samples/**
+
+# 개발/캐시
+node_modules
+node_modules/**
+.yarn
+.pnp.*
+*.log
+.DS_Store
+
+# VCS
+.git
+.git/**
+
+# RN 빌드 산출물/캐시
+**/build
+**/.gradle
+**/Pods
+**/DerivedData

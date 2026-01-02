@@ -8,6 +8,11 @@ node_modules/
 samples/
 docs/
 
+build
+
+ios/build
+android/build
+
 # Build artifacts
 *.log
 *.tgz
@@ -28,3 +33,5 @@ docs/
 __tests__/
 *.test.ts
 *.test.js
+
+samples
