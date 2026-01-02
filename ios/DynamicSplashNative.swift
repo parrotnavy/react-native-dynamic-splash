@@ -24,8 +24,8 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
     }
     
     // Safely create URL and image source
-    guard let url = URL(string: "file://\(path)"),
-          let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil) else {
+    let url = URL(fileURLWithPath: path)
+    guard let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil) else {
       return nil
     }
     
@@ -74,11 +74,8 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
   }
   
   private static func overlayView(imagePath: String?, backgroundColor: UIColor?) -> UIView {
-    // Safely get screen bounds - ensure we're on main thread if possible
-    // but don't fail if we're not, just create with default bounds
-    let screenBounds = Thread.isMainThread ? UIScreen.main.bounds : CGRect(x: 0, y: 0, width: 375, height: 812)
-    
-    let container = UIView(frame: screenBounds)
+    // Get screen bounds - this is always called from main thread via show()
+    let container = UIView(frame: UIScreen.main.bounds)
     container.backgroundColor = backgroundColor ?? .white
 
     if let imagePath = imagePath, !imagePath.isEmpty {

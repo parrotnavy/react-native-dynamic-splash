@@ -54,7 +54,8 @@ public class AnimatedImageView extends ImageView {
         } catch (IOException e) {
           // Silently handle IO errors - image loading is non-critical
         } catch (OutOfMemoryError e) {
-          // Silently handle OOM - image might be too large
+          // Log OOM error and fail gracefully
+          android.util.Log.e("AnimatedImageView", "OutOfMemoryError loading image: " + path, e);
         }
       } else {
         try {
@@ -63,7 +64,8 @@ public class AnimatedImageView extends ImageView {
             setImageBitmap(bitmap);
           }
         } catch (OutOfMemoryError e) {
-          // Silently handle OOM - image might be too large
+          // Log OOM error and fail gracefully
+          android.util.Log.e("AnimatedImageView", "OutOfMemoryError decoding bitmap: " + path, e);
         }
       }
     } catch (Exception e) {
