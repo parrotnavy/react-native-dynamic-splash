@@ -1,18 +1,103 @@
-# React Native Dynamic Splash
+# 💐 React Native Dynamic Splash
 
-Dynamic splash screen overlay for React Native. It fetches a remote JSON config,
-prepares assets in the background, and displays them natively on the next launch
-when all validations pass.
+[![mit licence](https://img.shields.io/dub/l/vibe-d.svg?style=for-the-badge)](https://github.com/parrotnavy/react-native-dynamic-splash/blob/main/LICENSE)
+[![platform - android](https://img.shields.io/badge/platform-Android-3ddc84.svg?logo=android&style=for-the-badge)](https://www.android.com)
+[![platform - ios](https://img.shields.io/badge/platform-iOS-000.svg?logo=apple&style=for-the-badge)](https://developer.apple.com/ios)
+
+<p>
+  <img width="302" src="./docs/preview.gif" alt="Demo">
+</p>
+
+<br>
+
+A native-first dynamic splash layer for React Native that intentionally occupies the moment between OS launch and app readiness.
 
 ## Overview
 
-- **Native-first architecture**: Overlay display is handled entirely by native modules (iOS/Android)
-- **JavaScript for data**: JS layer handles background updates, image downloads, and metadata storage
-- **Next-launch-only policy**: Download now, show next launch
-- **Fail-closed behavior**: Any failure → not shown
-- **Native storage-backed metadata**: NSUserDefaults (iOS) / SharedPreferences (Android)
-- **Animated image support**: GIF and APNG animations (iOS: all versions, Android: API 28+)
-- **Configurable fade effects**: Global fade in/out animations with customizable duration
+**react-native-dynamic-splash** is not a generic full-screen banner or in-app advertisement component.
+
+Its purpose is to provide a **dynamic, full-screen transition layer that appears immediately after the OS-level splash screen and before any app UI is rendered**.
+
+This library intentionally targets the narrow but critical time window between:
+1. The operating system’s mandatory static splash screen, and
+2. The moment when the React Native application becomes interactive.
+
+### What This Is
+
+- A **dynamic splash / initial transition screen**
+- Displayed **before app content**, not on top of it
+- Controlled natively (iOS / Android), independent of JS readiness
+- Capable of acting as:
+  - A loading screen
+  - A branded entry experience
+  - A marketing / campaign surface
+
+From a UX perspective, users perceive this as part of the app startup sequence — not as an interruptive ad.
+
+### What This Is NOT
+
+- ❌ A modal or screen rendered inside React Navigation
+- ❌ A post-launch in-app advertisement
+- ❌ A generic full-screen banner component
+- ❌ A replacement for OS-level LaunchScreen assets
+
+
+### Execution Model
+
+
+The startup timeline is intentionally structured as:
+
+```mermaid
+sequenceDiagram
+    participant OS as OS Splash
+    participant DS as Dynamic Splash
+    participant APP as App UI
+
+    OS->>DS: 1. OS splash ends
+    DS->>DS: 2. Show dynamic splash immediately
+    DS->>DS: 3. App is loading in background
+    DS->>APP: 4. App signals ready
+    DS->>DS: 5. Hide splash (fade / timing)
+    DS->>APP: 6. App UI becomes visible
+```
+
+
+1. **OS Static Splash**
+   - Android launch theme
+   - iOS `LaunchScreen.storyboard`
+2. **Dynamic Splash (this library)**
+   - Shown immediately after OS splash
+   - Uses cached, pre-validated assets
+   - Can be animated (GIF / APNG)
+   - Enforced timing via native code
+3. **App UI**
+   - Hidden until JS signals readiness
+
+This makes the dynamic splash a **first-class startup layer**, not an application screen.
+
+### Architectural Principles
+
+- **Native-first display**
+  - Overlay window is fully managed by native modules
+- **JS for data, not rendering**
+  - JavaScript only fetches configs, downloads assets, and persists metadata
+- **Next-launch determinism**
+  - Assets are prepared ahead of time and only shown on the next app launch
+- **Fail-closed behavior**
+  - Any validation or IO failure results in no splash being shown
+- **No coupling to navigation or app state**
+  - The splash lifecycle is independent from React rendering
+
+### Typical Use Cases
+
+- Startup branding without rebuilding the app
+- Campaign or promotion display at app launch
+- Masking cold-start latency with intentional visuals
+- Gradual replacement of static splash experiences
+
+In short:
+
+> **This library exists to intentionally design the moment between “app launched” and “app ready”.**
 
 ## Installation
 
@@ -22,15 +107,15 @@ npm install react-native-dynamic-splash
 yarn add react-native-dynamic-splash
 ```
 
-## Native Integration (minimal changes)
+## Native Integration
 
 Show the READY splash content natively (based on stored metadata), then hide it once JS is ready.
-This does not touch or reuse LaunchScreen assets.
+**This does not touch or reuse LaunchScreen assets.**
 
 ### iOS (AppDelegate.swift)
 
 ```swift
-import react_native_dynamic_splash
+import react_native_dynamic_splash // <-- Add like this
 
 @main
 class AppDelegate: RCTAppDelegate {
@@ -38,7 +123,7 @@ class AppDelegate: RCTAppDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    DynamicSplashNative.show()
+    DynamicSplashNative.show() // <-- Add like this
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }
@@ -47,12 +132,12 @@ class AppDelegate: RCTAppDelegate {
 ### Android (MainActivity)
 
 ```java
-import com.reactnativedynamicsplash.DynamicSplashNativeModule;
+import com.reactnativedynamicsplash.DynamicSplashNativeModule; // <-- Add like this
 
 @Override
 protected void onCreate(Bundle savedInstanceState) {
   super.onCreate(savedInstanceState);
-  DynamicSplashNativeModule.show(this);
+  DynamicSplashNativeModule.show(this); // <-- Add like this
 }
 ```
 
@@ -83,9 +168,9 @@ const isVisible = await DynamicSplash.isVisible();
 Peer dependencies:
 
 ```bash
-npm install react-native-fs
+npm install react-native-dynamic-splash react-native-fs && npx pod-install
 # or
-yarn add react-native-fs
+yarn add react-native-dynamic-splash react-native-fs && npx pod-install
 ```
 
 ## Quick Start

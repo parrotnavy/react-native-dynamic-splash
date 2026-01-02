@@ -1,9 +1,9 @@
 
-import { JSX, useCallback, useEffect, useMemo, useState } from 'react';
-import { createDynamicSplash, DynamicSplash } from '../../dist';
+import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
+import { Button, NativeModules, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, NativeModules, StyleSheet, Text, View } from 'react-native';
 import type { StoredMeta } from '../../dist';
+import { createDynamicSplash, DynamicSplash } from '../../dist';
 import { splashConfig } from './splashConfig';
 
 const DEFAULT_STORAGE_KEY = 'DYNAMIC_SPLASH_META_V1';
@@ -113,7 +113,7 @@ function App(): JSX.Element {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView style={styles.content}>
         <Text style={styles.title}>Dynamic Splash Sample</Text>
 
         <View style={styles.card}>
@@ -149,7 +149,7 @@ function App(): JSX.Element {
             </Text>
           )}
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -162,8 +162,6 @@ const styles = StyleSheet.create({
   content: {
     padding: 24,
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   title: {
     fontSize: 24,

@@ -15,7 +15,7 @@ export const splashConfig: InitOptions = {
     logger: (msg: string, ...args: any[]) => console.log('[SampleApp]', msg, ...args),
     minDurationMs: 2000,
     maxDurationMs: 2000,
-    enableFade: false,
-    fadeDurationMs: 500,
+    enableFade: true,
+    fadeDurationMs: 200,
     showOnUpdate: false,
 };
