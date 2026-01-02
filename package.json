@@ -1,5 +1,5 @@
 {
-  "name": "react-native-dynamic-splash",
+  "name": "@parrotnavy/react-native-dynamic-splash",
   "version": "0.8.0",
   "description": "Native-first dynamic splash screen with remote config, animated GIF/APNG support, and background asset caching for React Native",
   "homepage": "https://github.com/parrotnavy/react-native-dynamic-splash",
@@ -34,5 +34,20 @@
   "type": "commonjs",
   "resolutions": {
     "@types/react": "^18.0.0"
+  },
+  "files": [
+    "dist/",
+    "android/",
+    "ios/",
+    "react-native-dynamic-splash.podspec",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/parrotnavy/react-native-dynamic-splash.git"
+  },
+  "bugs": {
+    "url": "https://github.com/parrotnavy/react-native-dynamic-splash/issues"
   }
 }

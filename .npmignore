@@ -1,0 +1,30 @@
+# Source files (only ship dist/)
+src/
+tsconfig.json
+biome.json
+
+# Development
+node_modules/
+samples/
+docs/
+
+# Build artifacts
+*.log
+*.tgz
+
+# OS
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.github/
+
+# IDE
+.vscode/
+.idea/
+
+# Tests
+__tests__/
+*.test.ts
+*.test.js

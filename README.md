@@ -102,9 +102,9 @@ In short:
 ## Installation
 
 ```bash
-npm install react-native-dynamic-splash
+npm install @parrotnavy/react-native-dynamic-splash react-native-fs && npx pod-install
 # or
-yarn add react-native-dynamic-splash
+yarn add @parrotnavy/react-native-dynamic-splash react-native-fs && npx pod-install
 ```
 
 ## Native Integration
@@ -163,14 +163,6 @@ DynamicSplash.hide();
 
 // Check if splash is currently visible
 const isVisible = await DynamicSplash.isVisible();
-```
-
-Peer dependencies:
-
-```bash
-npm install react-native-dynamic-splash react-native-fs && npx pod-install
-# or
-yarn add react-native-dynamic-splash react-native-fs && npx pod-install
 ```
 
 ## Quick Start
