@@ -160,7 +160,10 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
       scaleStart = json.has("scaleStart") ? (float) json.optDouble("scaleStart") : null;
       scaleEnd = json.has("scaleEnd") ? (float) json.optDouble("scaleEnd") : null;
       scaleDurationMs = json.has("scaleDurationMs") ? json.optInt("scaleDurationMs") : null;
-      scaleEasing = json.optString("scaleEasing", null);
+      scaleEasing = json.has("scaleEasing") ? json.optString("scaleEasing", null) : null;
+      if (scaleEasing != null && scaleEasing.isEmpty()) {
+        scaleEasing = null;
+      }
       int minDurationMs = json.optInt("minDurationMs", 0);
       int maxDurationMs = json.optInt("maxDurationMs", 0);
       
