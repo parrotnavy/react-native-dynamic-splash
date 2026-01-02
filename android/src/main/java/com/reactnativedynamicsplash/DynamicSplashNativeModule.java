@@ -258,7 +258,9 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
     } catch (Exception e) {
       // Ensure cleanup even if animation or dismiss fails
       try {
-        overlayDialog.dismiss();
+        if (overlayDialog != null) {
+          overlayDialog.dismiss();
+        }
       } catch (Exception ignored) {}
       overlayDialog = null;
       showStartTime = 0;

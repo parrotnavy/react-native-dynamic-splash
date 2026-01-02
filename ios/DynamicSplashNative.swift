@@ -74,19 +74,8 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
   }
   
   private static func overlayView(imagePath: String?, backgroundColor: UIColor?) -> UIView {
-    // Safely get screen bounds on the main thread
-    let screenBounds: CGRect
-    if Thread.isMainThread {
-      screenBounds = UIScreen.main.bounds
-    } else {
-      var bounds = CGRect.zero
-      DispatchQueue.main.sync {
-        bounds = UIScreen.main.bounds
-      }
-      screenBounds = bounds
-    }
-    
-    let container = UIView(frame: screenBounds)
+    // Get screen bounds - this is always called from main thread via show()
+    let container = UIView(frame: UIScreen.main.bounds)
     container.backgroundColor = backgroundColor ?? .white
 
     if let imagePath = imagePath, !imagePath.isEmpty {
