@@ -20,7 +20,10 @@ A native-first dynamic splash layer for React Native that intentionally occupies
 
 **react-native-dynamic-splash** is not a generic full-screen banner or in-app advertisement component.
 
-Its purpose is to provide a **dynamic, full-screen transition layer that appears immediately after the OS-level splash screen and before any app UI is rendered**.
+> [!IMPORTANT]
+> Its purpose is to provide a **dynamic, full-screen transition layer that appears immediately after the OS-level splash screen and before any app UI is rendered**.
+
+
 
 This library intentionally targets the narrow but critical time window between:
 1. The operating system’s mandatory static splash screen, and
