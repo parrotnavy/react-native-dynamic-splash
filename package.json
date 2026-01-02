@@ -39,9 +39,9 @@
     "dist/",
     "android/src/",
     "android/build.gradle",
-    "ios/*.swift",
-    "ios/*.h",
-    "ios/*.m",
+    "ios/**/*.swift",
+    "ios/**/*.h",
+    "ios/**/*.m",
     "react-native-dynamic-splash.podspec",
     "README.md",
     "LICENSE"
