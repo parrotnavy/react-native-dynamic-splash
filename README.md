@@ -119,7 +119,7 @@ yarn add @parrotnavy/react-native-dynamic-splash react-native-fs && npx pod-inst
 Show the READY splash content natively (based on stored metadata), then hide it once JS is ready.
 **This does not touch or reuse LaunchScreen assets.**
 
-### iOS (AppDelegate.swift)
+### iOS (Swift - AppDelegate.swift)
 
 ```swift
 import react_native_dynamic_splash // <-- Add like this
@@ -136,6 +136,29 @@ class AppDelegate: RCTAppDelegate {
 }
 ```
 
+### iOS (Objective-C - AppDelegate.m)
+
+```objc
+#import "AppDelegate.h"
+#import <React/RCTBundleURLProvider.h>
+#import "RNDynamicSplash.h" // <-- Add like this
+
+@implementation AppDelegate
+
+- (BOOL)application:(UIApplication *)application 
+    didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
+  self.moduleName = @"YourAppName";
+  self.initialProps = @{};
+  
+  [RNDynamicSplash show]; // <-- Add like this
+  
+  return [super application:application didFinishLaunchingWithOptions:launchOptions];
+}
+
+@end
+```
+
 ### Android (MainActivity)
 
 ```java
@@ -150,11 +173,19 @@ protected void onCreate(Bundle savedInstanceState) {
 
 Optional storage key override (use only if you changed `storageKey` in JS):
 
+**Swift:**
 ```swift
 DynamicSplashNative.setStorageKey("MY_CUSTOM_KEY")
 DynamicSplashNative.show()
 ```
 
+**Objective-C:**
+```objc
+[RNDynamicSplash setStorageKey:@"MY_CUSTOM_KEY"];
+[RNDynamicSplash show];
+```
+
+**Android:**
 ```java
 DynamicSplashNativeModule.setStorageKey("MY_CUSTOM_KEY");
 DynamicSplashNativeModule.show(this);
