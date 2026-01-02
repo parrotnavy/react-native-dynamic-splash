@@ -2,15 +2,12 @@
 import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, NativeModules, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { StoredMeta } from '../../dist';
 import { createDynamicSplash, DynamicSplash } from '../../dist';
 import { splashConfig } from './splashConfig';
 
 const DEFAULT_STORAGE_KEY = 'DYNAMIC_SPLASH_META_V1';
 
 function App(): JSX.Element {
-  const [storedMeta, setStoredMeta] = useState<StoredMeta | null>(null);
-  const [metaError, setMetaError] = useState<string | null>(null);
   const [nativeMeta, setNativeMeta] = useState<string | null>(null);
   const [nativeMetaError, setNativeMetaError] = useState<string | null>(null);
   const [storageKey, setStorageKey] = useState<string>(DEFAULT_STORAGE_KEY);
@@ -32,33 +29,6 @@ function App(): JSX.Element {
     }
     setStorageKey(fallbackKey);
   }, []);
-
-  const loadStoredMeta = useCallback(async () => {
-    try {
-      const getStringSync = NativeModules.DynamicSplashStorage?.getStringSync;
-      const getStringAsync = NativeModules.DynamicSplashStorage?.getString;
-      let raw: string | null = null;
-      if (typeof getStringSync === 'function') {
-        raw = getStringSync(storageKey);
-      } else if (typeof getStringAsync === 'function') {
-        raw = await getStringAsync(storageKey);
-      } else {
-        setStoredMeta(null);
-        setMetaError('DynamicSplashStorage.getString is unavailable');
-        return;
-      }
-      if (!raw) {
-        setStoredMeta(null);
-        setMetaError(null);
-        return;
-      }
-      setStoredMeta(JSON.parse(raw) as StoredMeta);
-      setMetaError(null);
-    } catch (error) {
-      setStoredMeta(null);
-      setMetaError(error instanceof Error ? error.message : 'Unknown error');
-    }
-  }, [storageKey]);
 
   const loadNativeMeta = useCallback(async () => {
     try {
@@ -87,10 +57,6 @@ function App(): JSX.Element {
   }, [loadStorageKey]);
 
   useEffect(() => {
-    void loadStoredMeta();
-  }, [loadStoredMeta]);
-
-  useEffect(() => {
     void loadNativeMeta();
   }, [loadNativeMeta]);
 
@@ -112,7 +78,7 @@ function App(): JSX.Element {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView edges={["top"]} style={styles.container}>
       <ScrollView style={styles.content}>
         <Text style={styles.title}>Dynamic Splash Sample</Text>
 
@@ -122,22 +88,11 @@ function App(): JSX.Element {
         </View>
 
         <Button
-          title="Refresh StoredMeta"
+          title="Refetch"
           onPress={() => {
-            void loadStoredMeta();
+            manager.mount();
           }}
         />
-
-        <View style={styles.metaCard}>
-          <Text style={styles.metaTitle}>StoredMeta</Text>
-          {metaError ? (
-            <Text style={styles.metaError}>{metaError}</Text>
-          ) : (
-            <Text style={styles.metaText}>
-              {storedMeta ? JSON.stringify(storedMeta, null, 2) : 'No stored meta'}
-            </Text>
-          )}
-        </View>
 
         <View style={styles.metaCard}>
           <Text style={styles.metaTitle}>Native LastLoadedMeta</Text>
