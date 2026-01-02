@@ -349,7 +349,7 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
   }
   
   @objc(isShowing:rejecter:)
-  public func isShowing(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
+  public func isShowing(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
     DispatchQueue.main.async {
       resolve(Self.isShowing())
     }
@@ -373,16 +373,17 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
   }
 
   @objc(getStorageKey:rejecter:)
-  public func getStorageKey(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
+  public func getStorageKey(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
     DispatchQueue.main.async {
       resolve(Self.getStorageKey())
     }
   }
 
   @objc(getLastLoadedMeta:rejecter:)
-  public func getLastLoadedMeta(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
+  public func getLastLoadedMeta(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
     DispatchQueue.main.async {
       resolve(Self.lastLoadedMetaRaw)
     }
   }
 }
+
