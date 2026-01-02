@@ -14,21 +14,55 @@ public class DynamicSplashStorage: NSObject, RCTBridgeModule {
 
   @objc(getStringSync:)
   public func getStringSync(_ key: String) -> String? {
-    return UserDefaults.standard.string(forKey: key)
+    guard !key.isEmpty else {
+      return nil
+    }
+    
+    do {
+      return UserDefaults.standard.string(forKey: key)
+    } catch {
+      return nil
+    }
   }
 
   @objc(getString:resolver:rejecter:)
   public func getString(_ key: String, resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
-    resolve(UserDefaults.standard.string(forKey: key))
+    guard !key.isEmpty else {
+      resolve(nil)
+      return
+    }
+    
+    do {
+      let value = UserDefaults.standard.string(forKey: key)
+      resolve(value)
+    } catch {
+      resolve(nil)
+    }
   }
 
   @objc(setString:value:)
   public func setString(_ key: String, value: String) {
-    UserDefaults.standard.set(value, forKey: key)
+    guard !key.isEmpty else {
+      return
+    }
+    
+    do {
+      UserDefaults.standard.set(value, forKey: key)
+    } catch {
+      // Silently fail to prevent crashes
+    }
   }
 
   @objc(remove:)
   public func remove(_ key: String) {
-    UserDefaults.standard.removeObject(forKey: key)
+    guard !key.isEmpty else {
+      return
+    }
+    
+    do {
+      UserDefaults.standard.removeObject(forKey: key)
+    } catch {
+      // Silently fail to prevent crashes
+    }
   }
 }
