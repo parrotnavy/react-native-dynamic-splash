@@ -225,8 +225,18 @@ const AppRoot = () => {
         }),
         minDurationMs: 2000,      // Minimum display time
         maxDurationMs: 5000,      // Auto-hide after 5 seconds
-        enableFade: true,         // Enable fade out animation
-        fadeDurationMs: 500,      // 500ms fade duration
+        animation: {
+          fade: {
+            enabled: true,
+            durationMs: 500,
+          },
+          scale: {
+            startScale: 1.0,
+            endScale: 1.1,
+            durationMs: 1000,
+            easing: "easeInOut",
+          },
+        },
       }),
     [],
   );
@@ -264,9 +274,32 @@ type InitOptions = {
 	minDurationMs?: number;
 	/** Maximum time to keep splash visible (ms). Native auto-hides after this duration. Default: no maximum. */
 	maxDurationMs?: number;
-	/** Enable fade out animation when hiding (default: true). */
+	/**
+	 * Animation settings for show/hide.
+	 * - fade: hide-only fade-out.
+	 * - scale: applied on show.
+	 */
+	animation?: {
+		fade?: {
+			/** Enable fade out animation when hiding (default: true). */
+			enabled?: boolean;
+			/** Fade out animation duration in milliseconds (default: 200). */
+			durationMs?: number;
+		};
+		scale?: {
+			/** Start scale factor (e.g., 1.0). */
+			startScale: number;
+			/** End scale factor (e.g., 1.2). */
+			endScale: number;
+			/** Animation duration in milliseconds. */
+			durationMs: number;
+			/** Animation easing (default: easeInOut). */
+			easing?: "linear" | "easeIn" | "easeOut" | "easeInOut";
+		};
+	};
+	/** @deprecated Use animation.fade.enabled instead. */
 	enableFade?: boolean;
-	/** Fade out animation duration in milliseconds (default: 200). */
+	/** @deprecated Use animation.fade.durationMs instead. */
 	fadeDurationMs?: number;
 	/** Storage key for persisted metadata (default: "DYNAMIC_SPLASH_META_V1"). */
 	storageKey?: string;
@@ -395,7 +428,7 @@ createDynamicSplash({
 - Display/hide overlay window
 - Read stored metadata from native storage
 - Apply `minDurationMs` and `maxDurationMs` timing constraints
-- Handle fade animations (based on `enableFade` and `fadeDurationMs`)
+- Handle fade and scale animations (based on `animation` settings)
 - Support animated images (GIF/APNG)
 - Manage overlay lifecycle independently of JavaScript
 
@@ -436,8 +469,9 @@ const manager = createDynamicSplash({
   configProvider: async () => ({ /* config */ }),
   minDurationMs: 2000,
   maxDurationMs: 5000,
-  enableFade: true,
-  fadeDurationMs: 500,
+  animation: {
+    fade: { enabled: true, durationMs: 500 },
+  },
 });
 ```
 
@@ -502,16 +536,51 @@ Fade effects are configured globally in `InitOptions` (not per-splash-item):
 ```ts
 createDynamicSplash({
   configProvider: async () => ({ /* ... */ }),
-  enableFade: true,        // Enable fade out animation
-  fadeDurationMs: 500,     // 500ms fade duration
+  animation: {
+    fade: {
+      enabled: true,       // Enable fade out animation
+      durationMs: 500,     // 500ms fade duration
+    },
+  },
 });
 ```
 
-- `enableFade: true` - Smooth fade out when hiding
-- `enableFade: false` - Instant hide (no animation)
-- `fadeDurationMs` - Duration in milliseconds (default: 200)
+- `animation.fade.enabled: true` - Smooth fade out when hiding
+- `animation.fade.enabled: false` - Instant hide (no animation)
+- `animation.fade.durationMs` - Duration in milliseconds (default: 200)
+
+Deprecated (still supported):
+
+```ts
+createDynamicSplash({
+  configProvider: async () => ({ /* ... */ }),
+  enableFade: true,
+  fadeDurationMs: 500,
+});
+```
 
 Fade settings are stored in metadata and applied by native modules on the next launch.
+
+## Scale Effects
+
+Scale effects are configured globally in `InitOptions`:
+
+```ts
+createDynamicSplash({
+  configProvider: async () => ({ /* ... */ }),
+  animation: {
+    scale: {
+      startScale: 1.0,
+      endScale: 1.1,
+      durationMs: 1000,
+      easing: "easeInOut",
+    },
+  },
+});
+```
+
+- `scale` runs when the splash is shown.
+- `scale.easing` can be one of `linear`, `easeIn`, `easeOut`, `easeInOut`.
 
 ## Timing Control
 

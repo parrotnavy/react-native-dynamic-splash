@@ -48,6 +48,14 @@ export interface StoredMeta {
 	enableFade?: boolean;
 	/** Fade out animation duration in milliseconds (default: 200). */
 	fadeDurationMs?: number;
+	/** Scale animation start scale (default: none). */
+	scaleStart?: number;
+	/** Scale animation end scale (default: none). */
+	scaleEnd?: number;
+	/** Scale animation duration in milliseconds (default: none). */
+	scaleDurationMs?: number;
+	/** Scale animation easing (default: easeInOut). */
+	scaleEasing?: "linear" | "easeIn" | "easeOut" | "easeInOut";
 	/** Minimum time to keep splash visible in milliseconds (from InitOptions). */
 	minDurationMs?: number;
 	/** Maximum time to keep splash visible in milliseconds (from InitOptions). */
@@ -70,9 +78,32 @@ export interface InitOptions {
 	minDurationMs?: number;
 	/** Maximum time to keep splash visible (ms). Default: no maximum. */
 	maxDurationMs?: number;
-	/** Enable fade out animation when hiding (default: true). */
+	/**
+	 * Animation settings for show/hide.
+	 * - fade: hide-only fade-out.
+	 * - scale: applied on show.
+	 */
+	animation?: {
+		fade?: {
+			/** Enable fade out animation when hiding (default: true). */
+			enabled?: boolean;
+			/** Fade out animation duration in milliseconds (default: 200). */
+			durationMs?: number;
+		};
+		scale?: {
+			/** Start scale factor (e.g., 1.0). */
+			startScale: number;
+			/** End scale factor (e.g., 1.2). */
+			endScale: number;
+			/** Animation duration in milliseconds. */
+			durationMs: number;
+			/** Animation easing (default: easeInOut). */
+			easing?: "linear" | "easeIn" | "easeOut" | "easeInOut";
+		};
+	};
+	/** @deprecated Use animation.fade.enabled instead. */
 	enableFade?: boolean;
-	/** Fade out animation duration in milliseconds (default: 200). */
+	/** @deprecated Use animation.fade.durationMs instead. */
 	fadeDurationMs?: number;
 	/** Storage key for persisted metadata (default: "DYNAMIC_SPLASH_META_V1"). */
 	storageKey?: string;
