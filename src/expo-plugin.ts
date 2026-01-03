@@ -60,10 +60,20 @@ const withIosDynamicSplash: ConfigPlugin = (config) => {
 			}
 
 			if (!config.modResults.contents.includes(showTag)) {
-				config.modResults.contents = config.modResults.contents.replace(
-					/(- \(BOOL\)application:\(UIApplication \*\)application didFinishLaunchingWithOptions:\(NSDictionary \*\)launchOptions\s*\{)/,
-					`$1\n  ${showTag}`,
-				);
+				const objcDidFinishLaunchingRegex =
+					/(-\s*\(BOOL\)\s*application\s*:\s*\(UIApplication\s*\*\s*\)application\s*didFinishLaunchingWithOptions\s*:\s*\(NSDictionary\s*\*\s*\)launchOptions\s*\{)/;
+
+				if (objcDidFinishLaunchingRegex.test(config.modResults.contents)) {
+					config.modResults.contents = config.modResults.contents.replace(
+						objcDidFinishLaunchingRegex,
+						`$1\n  ${showTag}`,
+					);
+				} else {
+					WarningAggregator.addWarningIOS(
+						"react-native-dynamic-splash",
+						"Could not find application:didFinishLaunchingWithOptions: in AppDelegate.mm. Please add [RNDynamicSplash show]; manually.",
+					);
+				}
 			}
 		}
 
