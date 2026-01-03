@@ -23,8 +23,6 @@ A native-first dynamic splash layer for React Native that intentionally occupies
 > [!IMPORTANT]
 > Its purpose is to provide a **dynamic, full-screen transition layer that appears immediately after the OS-level splash screen and before any app UI is rendered**.
 
-
-
 This library intentionally targets the narrow but critical time window between:
 1. The operating system’s mandatory static splash screen, and
 2. The moment when the React Native application becomes interactive.
@@ -108,10 +106,35 @@ In short:
 
 ## Installation
 
+### Bare React Native
+
 ```bash
 npm install @parrotnavy/react-native-dynamic-splash react-native-fs && npx pod-install
 # or
 yarn add @parrotnavy/react-native-dynamic-splash react-native-fs && npx pod-install
+```
+
+### Expo (Managed Workflow)
+
+```bash
+npx expo install @parrotnavy/react-native-dynamic-splash react-native-fs
+```
+
+Add the plugin to your `app.json` (or `app.config.js`):
+
+```json
+{
+  "expo": {
+    "plugins": ["@parrotnavy/react-native-dynamic-splash"]
+  }
+}
+```
+
+> [!IMPORTANT]
+> This library uses native code via a Config Plugin. It **requires a Development Build** and cannot be tested in the standard Expo Go app.
+
+```bash
+npx expo run:ios # or run:android
 ```
 
 ## Native Integration
