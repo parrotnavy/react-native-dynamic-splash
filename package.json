@@ -1,6 +1,6 @@
 {
   "name": "@parrotnavy/react-native-dynamic-splash",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Native-first dynamic splash screen with remote config, animated GIF/APNG support, and background asset caching for React Native",
   "homepage": "https://github.com/parrotnavy/react-native-dynamic-splash",
   "main": "dist/index.js",
@@ -15,7 +15,8 @@
     "react-native",
     "splash",
     "dynamic",
-    "full-screen banner"
+    "full-screen banner",
+    "expo"
   ],
   "author": "Jeremy Kwon <modoriapps@gmail.com>",
   "license": "MIT",
@@ -26,6 +27,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.10",
+    "@expo/config-plugins": "^54.0.4",
+    "@expo/config-types": "^54.0.10",
     "@types/react": "^18.0.0",
     "@types/react-native": "^0.72.0",
     "react-native-fs": "^2.20.0",
@@ -55,5 +58,9 @@
   },
   "engines": {
     "node": ">=20.0.0"
+  },
+  "expo": {
+    "name": "react-native-dynamic-splash",
+    "plugin": "./app.plugin.js"
   }
 }
