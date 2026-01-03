@@ -20,7 +20,7 @@ const withIosDynamicSplash: ConfigPlugin = (config) => {
 
 			if (!config.modResults.contents.includes(importTag)) {
 				config.modResults.contents = config.modResults.contents.replace(
-					/import .*/,
+					/^import .*/m,
 					`$&\n${importTag}`,
 				);
 			}
@@ -91,7 +91,7 @@ const withAndroidDynamicSplash: ConfigPlugin = (config) => {
 
 			if (!config.modResults.contents.includes(importTag)) {
 				config.modResults.contents = config.modResults.contents.replace(
-					/package .*/,
+					/^package .*/m,
 					`$&\n\n${importTag}`,
 				);
 			}
@@ -134,7 +134,7 @@ const withAndroidDynamicSplash: ConfigPlugin = (config) => {
 
 			if (!config.modResults.contents.includes(importTag)) {
 				config.modResults.contents = config.modResults.contents.replace(
-					/package .*;/,
+					/^package .*;/m,
 					`$&\n\n${importTag}`,
 				);
 			}
