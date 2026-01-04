@@ -7,6 +7,9 @@
 [![platform - android](https://img.shields.io/badge/platform-Android-3ddc84.svg?logo=android&style=for-the-badge)](https://www.android.com)
 [![platform - ios](https://img.shields.io/badge/platform-iOS-000.svg?logo=apple&style=for-the-badge)](https://developer.apple.com/ios)
 
+
+
+
 <p>
   <img width="302" src="./docs/preview.gif" alt="Demo">
 </p>
@@ -14,6 +17,10 @@
 <br>
 
 A native-first dynamic splash layer for React Native that intentionally occupies the moment between OS launch and app readiness.
+
+> If this library saved you time, consider buying me a coffee. It really helps. [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/parrotnavy)
+
+
 
 ## Overview
 
