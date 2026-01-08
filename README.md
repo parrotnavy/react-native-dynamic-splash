@@ -486,44 +486,6 @@ createDynamicSplash({
   - local file exists
 - Any failure results in `ERROR` and no display on next launch.
 
-## Architecture
-
-### Native Layer (iOS/Android)
-
-**Responsibilities:**
-- Display/hide overlay window
-- Read stored metadata from native storage
-- Apply `minDurationMs` and `maxDurationMs` timing constraints
-- Handle fade and scale animations (based on `animation` settings)
-- Support animated images (GIF/APNG)
-- Manage overlay lifecycle independently of JavaScript
-
-**iOS Implementation:**
-- Uses `UIWindow` with `UIImageView` for overlay
-- `ImageIO` framework for GIF/APNG frame extraction
-- `UIView.animate` for fade effects
-- Timer-based auto-hide for `maxDurationMs`
-
-**Android Implementation:**
-- Uses `Dialog` with `AnimatedImageView` for overlay
-- `AnimatedImageDrawable` (API 28+) for GIF/APNG support
-- `View.animate()` for fade effects
-- Handler-based auto-hide for `maxDurationMs`
-
-### JavaScript Layer
-
-**Responsibilities:**
-- Fetch splash configuration from remote source
-- Download and cache images
-- Store metadata in native storage
-- Provide API to hide overlay (`DynamicSplash.hide()`)
-- Check overlay visibility (`DynamicSplash.isVisible()`)
-
-**NOT Responsible For:**
-- Displaying the overlay (native handles this)
-- Managing display state (native handles this)
-- Timing constraints (native handles this)
-
 ## API
 
 ### createDynamicSplash(options: InitOptions)
