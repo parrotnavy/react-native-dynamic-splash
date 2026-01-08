@@ -53,10 +53,20 @@ const withIosDynamicSplash: ConfigPlugin = (config) => {
 			const showTag = "[RNDynamicSplash show];";
 
 			if (!config.modResults.contents.includes(importTag)) {
-				config.modResults.contents = config.modResults.contents.replace(
-					'#import "AppDelegate.h"',
-					`#import "AppDelegate.h"\n${importTag}`,
-				);
+				// Use regex to handle potential whitespace variations
+				const appDelegateImportRegex = /(#import\s*"AppDelegate\.h")/;
+				if (appDelegateImportRegex.test(config.modResults.contents)) {
+					config.modResults.contents = config.modResults.contents.replace(
+						appDelegateImportRegex,
+						`$1\n${importTag}`,
+					);
+				} else {
+					// Fallback: insert at the beginning of import block
+					config.modResults.contents = config.modResults.contents.replace(
+						/(#import\s*[<"].*[>"])/,
+						`$1\n${importTag}`,
+					);
+				}
 			}
 
 			if (!config.modResults.contents.includes(showTag)) {
@@ -150,7 +160,12 @@ const withAndroidDynamicSplash: ConfigPlugin = (config) => {
 			}
 
 			if (!config.modResults.contents.includes(showTag)) {
-				if (
+				if (config.modResults.contents.includes("super.onCreate(null);")) {
+					config.modResults.contents = config.modResults.contents.replace(
+						"super.onCreate(null);",
+						`super.onCreate(null);\n    ${showTag}`,
+					);
+				} else if (
 					config.modResults.contents.includes(
 						"super.onCreate(savedInstanceState);",
 					)
@@ -162,7 +177,7 @@ const withAndroidDynamicSplash: ConfigPlugin = (config) => {
 				} else {
 					WarningAggregator.addWarningAndroid(
 						"react-native-dynamic-splash",
-						"Could not find super.onCreate(savedInstanceState) in MainActivity.java. Please add DynamicSplashNativeModule.show(this) manually.",
+						"Could not find super.onCreate in MainActivity.java. Please add DynamicSplashNativeModule.show(this); manually.",
 					);
 				}
 			}

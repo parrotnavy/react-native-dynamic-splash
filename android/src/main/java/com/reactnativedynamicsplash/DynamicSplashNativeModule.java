@@ -11,6 +11,7 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 
+import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -19,15 +20,17 @@ import com.facebook.react.bridge.Promise;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
+public class DynamicSplashNativeModule extends ReactContextBaseJavaModule implements LifecycleEventListener {
   private static final String MODULE_NAME = "DynamicSplashNative";
   private static Dialog overlayDialog;
+  private static WeakReference<Activity> overlayActivityRef;
   private static String storageKey = StorageConstants.DEFAULT_STORAGE_KEY;
   private static String lastLoadedMetaRaw;
   private static boolean fadeEnabled = true;
@@ -39,9 +42,52 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
   private static long showStartTime = 0;
   private static android.os.Handler maxDurationHandler;
   private static Runnable maxDurationRunnable;
+  private static boolean isHiding = false;
 
   public DynamicSplashNativeModule(ReactApplicationContext reactContext) {
     super(reactContext);
+    reactContext.addLifecycleEventListener(this);
+  }
+
+  @Override
+  public void onHostResume() {
+    // No action needed on resume
+  }
+
+  @Override
+  public void onHostPause() {
+    // No action needed on pause
+  }
+
+  @Override
+  public void onHostDestroy() {
+    // Clean up dialog when host activity is destroyed to prevent memory leaks
+    cleanupDialog();
+  }
+
+  private static void cleanupDialog() {
+    try {
+      if (maxDurationHandler != null && maxDurationRunnable != null) {
+        maxDurationHandler.removeCallbacks(maxDurationRunnable);
+        maxDurationHandler = null;
+        maxDurationRunnable = null;
+      }
+      if (overlayDialog != null) {
+        if (overlayDialog.isShowing()) {
+          overlayDialog.dismiss();
+        }
+        overlayDialog = null;
+      }
+      overlayActivityRef = null;
+      showStartTime = 0;
+      isHiding = false;
+    } catch (Exception e) {
+      // Ensure cleanup even if errors occur
+      overlayDialog = null;
+      overlayActivityRef = null;
+      showStartTime = 0;
+      isHiding = false;
+    }
   }
 
   @NonNull
@@ -87,8 +133,17 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
   }
 
   private static long parseDate(String text) {
-    if (text == null) return -1;
+    if (text == null || text.isEmpty()) return -1;
+
+    // Normalize 'Z' suffix to '+00:00' for better compatibility across Android versions
+    String normalizedText = text;
+    if (text.endsWith("Z")) {
+      normalizedText = text.substring(0, text.length() - 1) + "+00:00";
+    }
+
     String[] patterns = new String[] {
+      "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+      "yyyy-MM-dd'T'HH:mm:ssXXX",
       "yyyy-MM-dd'T'HH:mm:ss.SSSX",
       "yyyy-MM-dd'T'HH:mm:ssX"
     };
@@ -96,13 +151,39 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
       try {
         SimpleDateFormat format = new SimpleDateFormat(pattern, Locale.US);
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
-        Date date = format.parse(text);
+        Date date = format.parse(normalizedText);
         if (date != null) {
           return date.getTime();
         }
       } catch (ParseException ignored) {
+      } catch (IllegalArgumentException ignored) {
+        // Some Android versions may not support X/XXX patterns
       }
     }
+
+    // Fallback: try parsing without timezone (assume UTC)
+    try {
+      String withoutTz = normalizedText.replaceAll("[+-]\\d{2}:\\d{2}$", "");
+      SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US);
+      format.setTimeZone(TimeZone.getTimeZone("UTC"));
+      Date date = format.parse(withoutTz);
+      if (date != null) {
+        return date.getTime();
+      }
+    } catch (ParseException ignored) {
+    }
+
+    try {
+      String withoutTz = normalizedText.replaceAll("[+-]\\d{2}:\\d{2}$", "");
+      SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+      format.setTimeZone(TimeZone.getTimeZone("UTC"));
+      Date date = format.parse(withoutTz);
+      if (date != null) {
+        return date.getTime();
+      }
+    } catch (ParseException ignored) {
+    }
+
     return -1;
   }
 
@@ -168,6 +249,7 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
       int maxDurationMs = json.optInt("maxDurationMs", 0);
       
       showStartTime = System.currentTimeMillis();
+      overlayActivityRef = new WeakReference<>(activity);
 
       overlayDialog = new Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar_Fullscreen);
       overlayDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -219,23 +301,30 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
     } catch (Exception e) {
       // Silently fail to prevent crashes - splash is optional
       overlayDialog = null;
+      overlayActivityRef = null;
       showStartTime = 0;
     }
   }
 
   private static void hideInternal() {
     try {
+      // Prevent duplicate hide calls from queuing multiple operations
+      if (isHiding) {
+        return;
+      }
       if (overlayDialog != null && overlayDialog.isShowing()) {
+        isHiding = true;
+
         // Cancel max duration timer if it exists
         if (maxDurationHandler != null && maxDurationRunnable != null) {
           maxDurationHandler.removeCallbacks(maxDurationRunnable);
           maxDurationHandler = null;
           maxDurationRunnable = null;
         }
-        
-        // Check if minimum duration has elapsed
-        String raw = overlayDialog.getContext() instanceof Activity ? 
-          getStoredMeta((Activity) overlayDialog.getContext()) : null;
+
+        // Check if minimum duration has elapsed using WeakReference
+        Activity activity = overlayActivityRef != null ? overlayActivityRef.get() : null;
+        String raw = activity != null ? getStoredMeta(activity) : null;
         int minDurationMs = 0;
         if (raw != null) {
           try {
@@ -243,10 +332,10 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
             minDurationMs = json.optInt("minDurationMs", 0);
           } catch (Exception ignored) {}
         }
-        
+
         long elapsed = System.currentTimeMillis() - showStartTime;
         long remaining = minDurationMs - elapsed;
-        
+
         if (remaining > 0) {
           new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
@@ -260,13 +349,7 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
       }
     } catch (Exception e) {
       // Ensure cleanup even if hiding fails
-      try {
-        if (overlayDialog != null) {
-          overlayDialog.dismiss();
-        }
-      } catch (Exception ignored) {}
-      overlayDialog = null;
-      showStartTime = 0;
+      cleanupDialog();
     }
   }
   
@@ -292,7 +375,9 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
                       // Ignore dismiss errors
                     }
                     overlayDialog = null;
+                    overlayActivityRef = null;
                     showStartTime = 0;
+                    isHiding = false;
                   }
                 })
                 .start();
@@ -303,17 +388,13 @@ public class DynamicSplashNativeModule extends ReactContextBaseJavaModule {
         // Fallback to direct dismiss if fade fails or is disabled
         overlayDialog.dismiss();
         overlayDialog = null;
+        overlayActivityRef = null;
         showStartTime = 0;
+        isHiding = false;
       }
     } catch (Exception e) {
       // Ensure cleanup even if animation or dismiss fails
-      try {
-        if (overlayDialog != null) {
-          overlayDialog.dismiss();
-        }
-      } catch (Exception ignored) {}
-      overlayDialog = null;
-      showStartTime = 0;
+      cleanupDialog();
     }
   }
 

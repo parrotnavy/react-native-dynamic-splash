@@ -14,6 +14,7 @@ import java.io.IOException;
 
 public class AnimatedImageView extends ImageView {
   private AnimatedImageDrawable animatedDrawable;
+  private android.graphics.Bitmap loadedBitmap;
 
   public AnimatedImageView(Context context) {
     super(context);
@@ -27,6 +28,13 @@ public class AnimatedImageView extends ImageView {
     super(context, attrs, defStyleAttr);
   }
 
+  private void recycleBitmap() {
+    if (loadedBitmap != null && !loadedBitmap.isRecycled()) {
+      loadedBitmap.recycle();
+      loadedBitmap = null;
+    }
+  }
+
   public void setImagePath(String path) {
     try {
       if (path == null || path.isEmpty()) {
@@ -38,11 +46,14 @@ public class AnimatedImageView extends ImageView {
         return;
       }
 
+      // Clean up previous bitmap before loading new one
+      recycleBitmap();
+
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
         try {
           ImageDecoder.Source source = ImageDecoder.createSource(file);
           Drawable drawable = ImageDecoder.decodeDrawable(source);
-          
+
           if (drawable instanceof AnimatedImageDrawable) {
             animatedDrawable = (AnimatedImageDrawable) drawable;
             animatedDrawable.setRepeatCount(AnimatedImageDrawable.REPEAT_INFINITE);
@@ -61,6 +72,7 @@ public class AnimatedImageView extends ImageView {
         try {
           android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(path);
           if (bitmap != null) {
+            loadedBitmap = bitmap;
             setImageBitmap(bitmap);
           }
         } catch (OutOfMemoryError e) {
@@ -79,7 +91,9 @@ public class AnimatedImageView extends ImageView {
     try {
       if (animatedDrawable != null) {
         animatedDrawable.stop();
+        animatedDrawable = null;
       }
+      recycleBitmap();
     } catch (Exception e) {
       // Silently ignore errors when stopping animation
     }

@@ -28,7 +28,10 @@ export class SplashStorage {
 		try {
 			NativeModules.DynamicSplashNative?.setStorageKey?.(this.key);
 		} catch (e) {
-			console.warn("[DynamicSplash] Failed to set storage key on native module", e);
+			console.warn(
+				"[DynamicSplash] Failed to set storage key on native module",
+				e,
+			);
 		}
 		this.readyPromise = new Promise<boolean>((resolve) => {
 			this.resolveReady = resolve;

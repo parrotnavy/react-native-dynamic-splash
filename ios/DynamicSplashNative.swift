@@ -17,25 +17,31 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
     return true
   }
 
+  // Maximum number of animation frames to prevent memory issues with large GIFs
+  private static let maxAnimationFrames = 200
+
   private static func loadAnimatedImage(from path: String) -> (images: [UIImage], duration: TimeInterval)? {
     // Guard against empty path
     guard !path.isEmpty else {
       return nil
     }
-    
+
     // Safely create URL and image source
     let url = URL(fileURLWithPath: path)
     guard let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil) else {
       return nil
     }
-    
+
     let frameCount = CGImageSourceGetCount(imageSource)
     guard frameCount > 1 else { return nil }
-    
+
+    // Limit frame count to prevent memory issues
+    let effectiveFrameCount = min(frameCount, maxAnimationFrames)
+
     var images: [UIImage] = []
     var totalDuration: TimeInterval = 0
-    
-    for i in 0..<frameCount {
+
+    for i in 0..<effectiveFrameCount {
       // Safely create CGImage at index
       guard let cgImage = CGImageSourceCreateImageAtIndex(imageSource, i, nil) else { 
         continue 
@@ -322,6 +328,8 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
   private static var fadeDuration: Double = 0.2
   private static var showStartTime: Date?
   private static var maxDurationTimer: Timer?
+  private static var isHiding: Bool = false
+  private static var cachedMinDurationMs: Double?
   
   @objc
   public static func show() {
@@ -336,10 +344,12 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
         return 
       }
 
-      // Store fade settings
+      // Store fade settings and timing constraints
       fadeEnabled = meta.enableFade
       fadeDuration = meta.fadeDurationMs / 1000.0
       showStartTime = Date()
+      cachedMinDurationMs = meta.minDurationMs
+      isHiding = false
       
       // Create overlay view safely
       let overlayContentView = overlayView(imagePath: meta.imagePath, backgroundColor: meta.backgroundColor)
@@ -378,17 +388,23 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
   @objc
   public static func hide() {
     DispatchQueue.main.async {
-      // Check if window exists
-      guard let window = overlayWindow else { 
-        return 
+      // Prevent duplicate hide calls from queuing multiple operations
+      guard !isHiding else {
+        return
       }
-      
+
+      // Check if window exists
+      guard let window = overlayWindow else {
+        return
+      }
+
+      isHiding = true
+
       // Cancel max duration timer if it exists
       maxDurationTimer?.invalidate()
       maxDurationTimer = nil
-      
+
       let performHide = {
-        let animatedView = window.rootViewController?.view ?? window
         var pendingAnimations = 0
 
         let finalize = {
@@ -396,6 +412,8 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
           window.rootViewController = nil
           overlayWindow = nil
           showStartTime = nil
+          cachedMinDurationMs = nil
+          isHiding = false
 
           // Restore app window safely
           if let appDelegate = UIApplication.shared.delegate,
@@ -424,15 +442,14 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
           finalize()
         }
       }
-      
-      // Check if minimum duration has elapsed
-      if let meta = loadReadyMeta(),
-         let minDurationMs = meta.minDurationMs,
+
+      // Check if minimum duration has elapsed using cached value
+      if let minDurationMs = cachedMinDurationMs,
          let startTime = showStartTime,
          minDurationMs > 0 {
         let elapsed = Date().timeIntervalSince(startTime) * 1000.0
         let remaining = minDurationMs - elapsed
-        
+
         if remaining > 0 {
           // Schedule hide after remaining time
           DispatchQueue.main.asyncAfter(deadline: .now() + (remaining / 1000.0)) {
@@ -441,7 +458,7 @@ public class DynamicSplashNative: NSObject, RCTBridgeModule {
           return
         }
       }
-      
+
       // No minimum duration or already elapsed
       performHide()
     }

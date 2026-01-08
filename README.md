@@ -142,6 +142,15 @@ Add the plugin to your `app.json` (or `app.config.js`):
 npx expo run:ios # or run:android
 ```
 
+## Requirements
+
+| Platform | Minimum Version |
+|----------|-----------------|
+| iOS | 12.0+ |
+| Android | API 21+ (animated images require API 28+) |
+| Node.js | 20.0.0+ |
+| React Native | 0.70+ |
+
 ## Native Integration
 
 Show the READY splash content natively (based on stored metadata), then hide it once JS is ready.
@@ -222,7 +231,7 @@ DynamicSplashNativeModule.show(this);
 Then, once JS is ready, you can hide the splash:
 
 ```js
-import { DynamicSplash } from "react-native-dynamic-splash";
+import { DynamicSplash } from "@parrotnavy/react-native-dynamic-splash";
 
 // Hide the splash (respects minDurationMs and fade settings)
 DynamicSplash.hide();
@@ -235,7 +244,7 @@ const isVisible = await DynamicSplash.isVisible();
 
 ```tsx
 import React, { useEffect, useMemo } from "react";
-import { createDynamicSplash, DynamicSplash } from "react-native-dynamic-splash";
+import { createDynamicSplash, DynamicSplash } from "@parrotnavy/react-native-dynamic-splash";
 
 const AppRoot = () => {
   const manager = useMemo(
@@ -542,6 +551,11 @@ console.log('Splash visible:', isVisible);
 
 - **Android < API 28**: Animated images display as static (first frame only)
 - **iOS**: All formats fully supported via `ImageIO` framework
+
+### Limits
+
+- **Maximum frames**: 200 frames per animated image (to prevent memory issues)
+- Images exceeding this limit will be truncated to the first 200 frames
 
 ### Usage
 

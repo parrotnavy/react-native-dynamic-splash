@@ -1,6 +1,6 @@
 {
   "name": "@parrotnavy/react-native-dynamic-splash",
-  "version": "0.10.0",
+  "version": "1.0.0",
   "description": "Native-first dynamic splash screen with remote config, animated GIF/APNG support, and background asset caching for React Native",
   "homepage": "https://github.com/parrotnavy/react-native-dynamic-splash",
   "main": "dist/index.js",
@@ -21,7 +21,7 @@
     "full-screen banner",
     "expo"
   ],
-  "author": "Jeremy Kwon <modoriapps@gmail.com>",
+  "author": "Jeremy Kwon <kwonkiseok7@gmail.com>",
   "license": "MIT",
   "peerDependencies": {
     "react": "*",
