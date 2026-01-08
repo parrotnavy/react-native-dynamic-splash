@@ -242,49 +242,51 @@ const isVisible = await DynamicSplash.isVisible();
 
 ## Quick Start
 
-```tsx
-import React, { useEffect, useMemo } from "react";
-import { createDynamicSplash, DynamicSplash } from "@parrotnavy/react-native-dynamic-splash";
+### Step 1: Create a splash config file
 
-const AppRoot = () => {
-  const manager = useMemo(
-    () =>
-      createDynamicSplash({
-        configProvider: async () => ({
-          imageName: "promo-pink",
-          alt: "Pink Hug",
-          startAt: "2023-01-01T00:00:00Z",
-          endAt: "2026-12-31T23:59:59Z",
-          imageUrl: "https://example.com/promo-pink.png",
-          configVersion: "promo-pink-v1",
-          backgroundColor: "#FFC0CB",
-          weight: 5,
-        }),
-        minDurationMs: 2000,      // Minimum display time
-        maxDurationMs: 5000,      // Auto-hide after 5 seconds
-        animation: {
-          fade: {
-            enabled: true,
-            durationMs: 500,
-          },
-          scale: {
-            startScale: 1.0,
-            endScale: 1.1,
-            durationMs: 1000,
-            easing: "easeInOut",
-          },
-        },
-      }),
-    [],
-  );
+```ts
+// splashConfig.ts
+import type { InitOptions } from "@parrotnavy/react-native-dynamic-splash";
+
+export const splashConfig: InitOptions = {
+  // Fetch config from your backend or CDN
+  configProvider: async () => {
+    const response = await fetch("https://your-api.com/splash.json");
+    return response.json();
+  },
+  // Optional: Debug logging during development
+  logger: (msg, ...args) => console.log("[Splash]", msg, ...args),
+  // Timing constraints
+  minDurationMs: 2000,
+  maxDurationMs: 3000,
+  // Animations
+  animation: {
+    fade: { enabled: true, durationMs: 200 },
+    scale: { startScale: 1.0, endScale: 1.02, durationMs: 2000, easing: "linear" },
+  },
+};
+```
+
+### Step 2: Initialize in your App component
+
+```tsx
+// App.tsx
+import { useEffect, useMemo } from "react";
+import { createDynamicSplash, DynamicSplash } from "@parrotnavy/react-native-dynamic-splash";
+import { splashConfig } from "./splashConfig";
+
+function App() {
+  // Create manager instance (singleton)
+  const manager = useMemo(() => createDynamicSplash(splashConfig), []);
 
   useEffect(() => {
-    // Trigger background update to download and cache images
+    // Start background update to fetch config and cache images
     manager.mount();
   }, [manager]);
 
   useEffect(() => {
-    // Optional: Hide splash after app is ready
+    // Hide splash when your app is ready
+    // (e.g., after data loading, auth check, etc.)
     const timer = setTimeout(() => {
       DynamicSplash.hide();
     }, 3000);
@@ -292,12 +294,39 @@ const AppRoot = () => {
   }, []);
 
   return (
-    <>
-      {/* App content */}
-    </>
+    // Your app content
   );
-};
+}
 ```
+
+### Step 3: Host your splash config JSON
+
+```json
+[
+  {
+    "imageName": "welcome-offer-2026q1",
+    "alt": "Welcome offer: 20% off your first order",
+    "startAt": "2026-01-01T00:00:00Z",
+    "endAt": "2026-03-31T23:59:59Z",
+    "imageUrl": "https://cdn.example.com/splash/welcome.png",
+    "configVersion": "2026.01.0",
+    "backgroundColor": "#0B1220",
+    "weight": 2
+  },
+  {
+    "imageName": "spring-sale-2026",
+    "alt": "Spring sale: Up to 50% off",
+    "startAt": "2026-03-01T00:00:00Z",
+    "endAt": "2026-04-30T23:59:59Z",
+    "imageUrl": "https://cdn.example.com/splash/spring-sale.gif",
+    "configVersion": "2026.03.0",
+    "backgroundColor": "#101828",
+    "weight": 3
+  }
+]
+```
+
+> **Note:** Images are downloaded and cached on the device. The splash is displayed on the **next app launch** after a successful download.
 
 ## Configuration
 
