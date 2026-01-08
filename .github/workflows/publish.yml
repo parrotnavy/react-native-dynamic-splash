@@ -10,6 +10,11 @@ on:
       - '.github/**'
       - 'README.md'
       - '*.md'
+      - 'src/__mocks__/**'
+      - 'src/__tests__/**'
+      - 'src/**/__tests__/**'
+      - 'jest.config.js'
+      - 'coverage/**'
 
 permissions:
   id-token: write
