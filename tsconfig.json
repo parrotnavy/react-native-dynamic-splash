@@ -13,8 +13,9 @@
     "outDir": "./dist",
     "declaration": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["jest", "node"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "samples"]
+  "exclude": ["node_modules", "samples", "src/__mocks__", "src/**/__tests__"]
 }

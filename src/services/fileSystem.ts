@@ -3,6 +3,16 @@ import RNFS, {
 	type DownloadResult,
 } from "react-native-fs";
 
+async function safeUnlink(path: string): Promise<void> {
+	try {
+		if (await RNFS.exists(path)) {
+			await RNFS.unlink(path);
+		}
+	} catch {
+		// Ignore cleanup errors - file may already be deleted or inaccessible
+	}
+}
+
 export class SplashFileSystem {
 	private baseDir: string;
 
@@ -20,10 +30,8 @@ export class SplashFileSystem {
 		const safeDir = cacheDir.endsWith("/") ? cacheDir : `${cacheDir}/`;
 		const tempPath = `${safeDir}splash_temp_${Date.now()}_${filename}`;
 
-		// Ensure temp file doesn't exist
-		if (await RNFS.exists(tempPath)) {
-			await RNFS.unlink(tempPath);
-		}
+		// Ensure temp file doesn't exist (cleanup errors are ignored)
+		await safeUnlink(tempPath);
 
 		const options: DownloadFileOptions = {
 			fromUrl: url,
@@ -33,10 +41,8 @@ export class SplashFileSystem {
 		const result: DownloadResult = await RNFS.downloadFile(options).promise;
 
 		if (result.statusCode !== 200) {
-			// Try to delete if it was created
-			if (await RNFS.exists(tempPath)) {
-				await RNFS.unlink(tempPath);
-			}
+			// Try to delete if it was created (cleanup errors are ignored)
+			await safeUnlink(tempPath);
 			throw new Error(`Download failed with status ${result.statusCode}`);
 		}
 
@@ -47,22 +53,22 @@ export class SplashFileSystem {
 		const base = this.baseDir.endsWith("/") ? this.baseDir : `${this.baseDir}/`;
 		const destPath = `${base}${filename}`;
 
-		// Delete existing if any
-		if (await RNFS.exists(destPath)) {
-			await RNFS.unlink(destPath);
-		}
+		// Delete existing if any (cleanup errors are ignored)
+		await safeUnlink(destPath);
 
 		await RNFS.moveFile(tempPath, destPath);
 		return destPath;
 	}
 
 	async exists(path: string): Promise<boolean> {
-		return await RNFS.exists(path);
+		try {
+			return await RNFS.exists(path);
+		} catch {
+			return false;
+		}
 	}
 
-	async delete(path: string) {
-		if (await RNFS.exists(path)) {
-			await RNFS.unlink(path);
-		}
+	async delete(path: string): Promise<void> {
+		await safeUnlink(path);
 	}
 }

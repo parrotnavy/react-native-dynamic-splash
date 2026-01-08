@@ -46,7 +46,11 @@ export class DynamicSplashManagerImpl implements DynamicSplashManager {
 
 	async hide(): Promise<void> {
 		this.options.logger?.("[DynamicSplash] Hide requested");
-		NativeModules.DynamicSplashNative?.hide?.();
+		try {
+			NativeModules.DynamicSplashNative?.hide?.();
+		} catch (e) {
+			console.warn("[DynamicSplash] Failed to call native hide()", e);
+		}
 	}
 
 	async isVisible(): Promise<boolean> {

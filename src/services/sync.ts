@@ -145,7 +145,11 @@ export async function processSplashConfig(
 	storage.setMeta(newMeta);
 	logger?.("[DynamicSplash] Config processed and saved. READY for next launch");
 	if (options.showOnUpdate) {
-		NativeModules.DynamicSplashNative?.show?.();
+		try {
+			NativeModules.DynamicSplashNative?.show?.();
+		} catch (e) {
+			console.warn("[DynamicSplash] Failed to call native show()", e);
+		}
 	}
 }
 

@@ -25,7 +25,11 @@ export const DynamicSplash = {
 				"[DynamicSplash] Manager not initialized. Make sure to call createDynamicSplash first.",
 			);
 		}
-		NativeModules.DynamicSplashNative?.hide?.();
+		try {
+			NativeModules.DynamicSplashNative?.hide?.();
+		} catch (e) {
+			console.warn("[DynamicSplash] Failed to call native hide()", e);
+		}
 	},
 	isVisible: async (): Promise<boolean> => {
 		if (_manager) {
