@@ -9,6 +9,7 @@ on:
       - 'docs/**'
       - '.github/**'
       - 'README.md'
+      - '*.md'
 
 permissions:
   id-token: write
