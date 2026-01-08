@@ -212,19 +212,19 @@ Optional storage key override (use only if you changed `storageKey` in JS):
 
 **Swift:**
 ```swift
-DynamicSplashNative.setStorageKey("MY_CUSTOM_KEY")
+// DynamicSplashNative.setStorageKey("MY_CUSTOM_KEY")  // Uncomment if using custom storageKey
 DynamicSplashNative.show()
 ```
 
 **Objective-C:**
 ```objc
-[RNDynamicSplash setStorageKey:@"MY_CUSTOM_KEY"];
+// [RNDynamicSplash setStorageKey:@"MY_CUSTOM_KEY"];  // Uncomment if using custom storageKey
 [RNDynamicSplash show];
 ```
 
 **Android:**
 ```java
-DynamicSplashNativeModule.setStorageKey("MY_CUSTOM_KEY");
+// DynamicSplashNativeModule.setStorageKey("MY_CUSTOM_KEY");  // Uncomment if using custom storageKey
 DynamicSplashNativeModule.show(this);
 ```
 
