@@ -326,7 +326,8 @@ function App() {
 ]
 ```
 
-> **Note:** Images are downloaded and cached on the device. The splash is displayed on the **next app launch** after a successful download.
+> [!IMPORTANT]
+> Images are downloaded and cached on the device. The splash is displayed on the **next app launch** after a successful download.
 
 ## Configuration
 
