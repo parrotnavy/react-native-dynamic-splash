@@ -1,3 +1,7 @@
 module.exports = {
-  preset: 'react-native',
+	preset: "react-native",
+	setupFiles: ["./jest.setup.ts"],
+	moduleNameMapper: {
+		"^../../dist$": "<rootDir>/__mocks__/dist.ts",
+	},
 };
